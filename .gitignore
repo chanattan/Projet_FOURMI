@@ -4,3 +4,16 @@ Projet/criteres_notation.md
 Projet/README.md
 Projet/dune-projet
 
+Projet/_build
+Projet/antsc
+Projet/*.install
+Projet/*.opam
+Projet/src/.merlin
+Projet/shell.nix
+Projet/src/ast.ml
+Projet/src/ast.mli
+Projet/src/parser.ml
+Projet/src/parser.mli
+Projet/src/lexer.ml
+Projet/src/lexer.mli
+Projet/parser_generator/simple-parser-gen
