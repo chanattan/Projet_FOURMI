@@ -1,0 +1,27 @@
+type program =
+	| Program 	<command+;>
+
+type func =
+    | Eq            <expression> == <expression>
+    | Inf           <expression> <= <expression>
+    | Sup           <expression> >= <expression>
+
+type expression =
+    | Const         <value>
+    | Var           let <ident> = <expression>
+    | IfThenElse    if (<expression>) {<program>} else {<program>}
+    | IfThen        if (<expression>) {<program>}
+    | While         while (<expression>) {<program>}
+    | DoWhile       do {<program>} while (<expression>)
+    | Apply         <ident>(<expression*,>)
+    | Func          fun <ident>(<expression*,>) {<program>}
+
+
+
+type value =
+    | Int   <int>
+    | Bool  <bool>
+
+type bool =
+    | true  true
+    | false false

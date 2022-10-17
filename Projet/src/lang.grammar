@@ -1,14 +1,28 @@
 type command =
-	| Move		move
-	| Turn		turn <direction>
-	| Pickup	pickup
-	| Drop		drop
-	| Label		<ident> : <command>
-	| Goto		goto <ident>
+	| Move			move
+	| Turn			turn <direction>
+	| Pickup		pickup
+	| Drop			drop
+	| Label			<ident> : <command>
+	| Goto			goto <ident>
+	| While			while(<bool>){<program>}
+	| IfThenElse 	if(<condition>){<program>}else{<program>}
+	| IfThen 	if(<condition>){<program>}
+
+type expression =
+	| Friend		friend
+	| Foe		foe
 
 type direction =
 	| Left		left
 	| Right		right
 
 type program =
-	| Program 		<command+;>
+	| Program 	<command+;>
+
+type bool =
+	| true
+	| false
+
+type eval =
+	|
