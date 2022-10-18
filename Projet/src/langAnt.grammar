@@ -1,10 +1,22 @@
 type program =
-	| Program 	<command+;>
+	| Program 	<expression+;>
 
-type func =
+type compare =
     | Eq            <expression> == <expression>
     | Inf           <expression> <= <expression>
     | Sup           <expression> >= <expression>
+	| StInf			<expression> < <expression>
+	| StSup			<expression> > <expression>
+
+type command = 
+	| Move			move(<ident>, [<expression*,>])
+	| Mark			mark(<int>)
+	| Unmark		unmark(<int>)
+	| Pickup		pickup(<ident>, [<expression*,>])
+	| Drop			drop()
+	| Turn			turn(<direction>)
+	| Sense 		sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+
 
 type expression =
     | Const         <value>
@@ -13,10 +25,33 @@ type expression =
     | IfThen        if (<expression>) {<program>}
     | While         while (<expression>) {<program>}
     | DoWhile       do {<program>} while (<expression>)
-    | Apply         <ident>(<expression*,>)
+    | Compare       <compare>
+	| Command		<command>
+	| Apply 		<ident>(<expression*,>)
     | Func          fun <ident>(<expression*,>) {<program>}
 
 
+type cond =
+	| Friend 			IS_FRIEND
+	| Foe				IS_FOE
+	| FriendWithFood	IS_FRIEND_WITH_FOOD
+	| FoeWithFood		IS_FOE_WITH_FOOD
+	| Food				IS_FOOD
+	| Rock				IS_ROCK
+	| Marker			IS_MARKER <int>
+	| FoeMarker			IS_FOE_MARKER
+	| Home				IS_HOME
+	| FoeHome			IS_FOE_HOME
+
+type direction = 
+	| Left 		L
+	| Right 	R
+
+type sensedir = 
+	| LeftAhead 		LEFT_AHEAD
+	| RightAhead 		RIGHT_AHEAD
+	| Here				HERE
+	| Ahead				AHEAD
 
 type value =
     | Int   <int>
