@@ -1,4 +1,4 @@
-open Printf
+open Printf;;
 
 let write_file filename = (* Ceci est un exemple. *)
   let oc = open_out filename in (* Ouvre un fichier pour écrire dedans. *)
@@ -17,7 +17,8 @@ let process_file filename =
   let lexer = Lexer.of_channel file in
   (* Parse le fichier. *)
   let (program, span) = Parser.parse_program lexer in
-  printf "successfully parsed the following program at position %t:\n%t\n" (CodeMap.Span.print span) (Ast.print_program program)
+  printf "successfully parsed the following program at position %t:\n%t\n" (CodeMap.Span.print span) (Ast.print_program program) ;
+  Compil.processProgram (program, span)
 
 (* Le point de départ du compilateur. *)
 let _ =
