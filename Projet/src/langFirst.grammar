@@ -3,7 +3,7 @@ type program =
 
 type compare =
     | Eq            <expression> == <expression>
-    | Inf           <expression> <= <expression>
+	| Inf           <expression> <= <expression>
     | Sup           <expression> >= <expression>
 	| StInf			<expression> < <expression>
 	| StSup			<expression> > <expression>
@@ -21,8 +21,8 @@ type command =
 type expression =
     | Const         <value>
     | Var           let <ident> = <expression>
-    | IfThenElse    if (<expression>) {<program>} else {<program>}
-    | IfThen        if (<expression>) {<program>}
+    | If        if (<expression>) {<program>}
+	| Else 			else {<program>} 
     | While         while (<expression>) {<program>}
     | DoWhile       do {<program>} while (<expression>)
     | Compare       <compare>

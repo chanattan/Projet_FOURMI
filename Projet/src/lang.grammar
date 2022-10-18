@@ -1,28 +1,57 @@
-type command =
-	| Move			move
-	| Turn			turn <direction>
-	| Pickup		pickup
-	| Drop			drop
-	| Label			<ident> : <command>
-	| Goto			goto <ident>
-	| While			while(<bool>){<program>}
-	| IfThenElse 	if(<condition>){<program>}else{<program>}
-	| IfThen 	if(<condition>){<program>}
+type program =
+	| Program 	<expression+;>
+
+type compare =
+    | Eq            <expression> == <expression>
+
+type command = 
+	| Move			move(<ident>, [<expression*,>])
+	| Mark			mark(<int>)
+	| Unmark		unmark(<int>)
+	| Pickup		pickup(<ident>, [<expression*,>])
+	| Turn			turn(<direction>)
+	| Sense 		sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+
 
 type expression =
-	| Friend		friend
-	| Foe		foe
+    | Const         <value>
+    | Var           let <ident> = <expression>
+    | If        	if (<expression>) {<program>}
+	| Else 			else {<program>} 
+    | While         while (<expression>) {<program>}
+    | DoWhile       do {<program>} while (<expression>)
+    | Compare       (<compare>)
+	| Command		<command>
+	| Apply 		<ident>(<expression*,>)
+    | Func          fun <ident>(<expression*,>) {<program>}
 
-type direction =
-	| Left		left
-	| Right		right
 
-type program =
-	| Program 	<command+;>
+type cond =
+	| Friend 			IS_FRIEND
+	| Foe				IS_FOE
+	| FriendWithFood	IS_FRIEND_WITH_FOOD
+	| FoeWithFood		IS_FOE_WITH_FOOD
+	| Food				IS_FOOD
+	| Rock				IS_ROCK
+	| Marker			IS_MARKER <int>
+	| FoeMarker			IS_FOE_MARKER
+	| Home				IS_HOME
+	| FoeHome			IS_FOE_HOME
+
+type direction = 
+	| Left 		L
+	| Right 	R
+
+type sensedir = 
+	| LeftAhead 		LEFT_AHEAD
+	| RightAhead 		RIGHT_AHEAD
+	| Here				HERE
+	| Ahead				AHEAD
+
+type value =
+    | Int   <int>
+    | Bool  <bool>
 
 type bool =
-	| true
-	| false
-
-type eval =
-	|
+    | True  true
+    | False false
