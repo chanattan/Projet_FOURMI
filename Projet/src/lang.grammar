@@ -2,7 +2,11 @@ type program =
 	| Program 	<expression+;>
 
 type compare =
-    | Eq            <expression> == <expression>
+    | Eq            <expression> eq <expression>
+	| Inf           <expression> lt <expression>
+    | Sup           <expression> gt <expression>
+	| StInf			<expression> le <expression>
+	| StSup			<expression> ge <expression>
 
 type command = 
 	| Move			move(<ident>, [<expression*,>])
