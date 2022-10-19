@@ -26,10 +26,11 @@ type expression =
 	| Else 			else {<program>} 
     | While         while (<expression>) {<program>}
     | DoWhile       do {<program>} while (<expression>)
-    | Compare       (<compare>)
+    | Compare       <compare>
+	| Operation		<operation>
 	| Command		<command>
 	| Apply 		<ident>(<expression*,>)
-    | Func          fun <ident>(<expression*,>) {<program>}
+    | Func          fun <ident>(<ident*,>) {<program>}
 
 type operation =
 	| Add			add <int <int>

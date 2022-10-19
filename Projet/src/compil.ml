@@ -7,7 +7,7 @@ type function_env = (string * (value list) * string) list (* nom de la fct, les 
 type environment = value_env * function_env
 
 
-let rec eval (expr : expression Span.located) (env : environment) :  = match expr with
+let rec eval (expr : expression Span.located) (env : environment) : value * environment = match expr with
   | Const(v, _),_ ->  v, env
   | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env out in (Unit, bvalue * environmentind_value str v new_env)
   | _ -> failwith "WIP"
@@ -22,26 +22,6 @@ let eval_list (list: (expression Span.located) list) (env: environment) (file: o
 
 
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
-
-let rec eval (expr : expression Span.located) (env : environment) (file: out_channel) : value * environment = match expr with
-  | Const(v, _),_ ->  v, env
-  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env file in (Unit, bind_value str v new_env)
-
-  | _ -> failwith "WIP"
-
-let eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) : value list * environment = 
-  let newEnv = ref env in
-  let rec aux l = match l with
-    | [] -> []
-    | expr::q -> let v,tempEnv = eval expr (!newEnv) file in newEnv := tempEnv ; v::(aux q)
-  in (aux list,!newEnv)
-
-let rec get_function_label str values env : string * environment = match env with
-    | (val_env,[]) -> (str,(val_env,[(str,values,str)]))
-    | (val_env, a::b) -> let (name, arg, label) = a in
-                    if str = name && values = arg then (label, (val_env,a::b))
-                    else get_function_label str values (val_env,b)
-
 
 (* process_command va traiter les commandes primitives concernant une fourmi*)
 let rec process_command cmd file_out env = match cmd with
@@ -111,11 +91,11 @@ let process_condition (condi : cond) (file_out : out_channel)  : unit = match co
 	| FoeHome -> fprintf file_out "FoeHome"
 
 let process_operation (op : operation) = match op with
-    | Add(v1, v2) -> v1 + v2
-    | Sub(v1, v2) -> v1 - v2
-    | Mul(v1, v2) -> v1 * v2
-    | Div(v1, v2) -> v1 / v2
-    | Mod(v1, v2) -> v1 mod v2
+    | Add(v1, v2) -> eval v1 + eval v2
+    | Sub(v1, v2) -> eval v1 - eval v2
+    | Mul(v1, v2) -> eval v1 * eval v2
+    | Div(v1, v2) -> eval v1 / eval v2
+    | Mod(v1, v2) -> eval v1 mod eval v2
 
 
 
