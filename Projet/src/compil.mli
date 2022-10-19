@@ -1,8 +1,8 @@
 open CodeMap
 open Ast
 
-type value_env = string * value list
-type function_env = string * (value list) * string list (* nom de la fct, les arguments en value, le label *)
+type value_env = (string * value) list
+type function_env = (string * (value list) * string) list (* nom de la fct, les arguments en value, le label *)
 type environment = value_env * function_env
 
 val process_program : program -> environment ->out_channel -> unit

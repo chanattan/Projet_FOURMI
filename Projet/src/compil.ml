@@ -8,16 +8,13 @@ type environment = value_env * function_env
 
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
-let rec eval (expr : expression Span.located) (env : environment) (file: out_channel) = match expr with
+let rec eval (expr : expression Span.located) (env : environment) (file: out_channel) : value * environment = match expr with
   | Const(v, _),_ ->  v, env
-  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env file in (Unit, bvalue * environmentind_value str v new_env)
+  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env file in (Unit, bind_value str v new_env)
+
   | _ -> failwith "WIP"
 
-(* let rec eval_list list env : value list = match list with
-  |[] -> []
-  |a::b -> (eval a env) :: (eval_list b env) *)
-
-let eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) = 
+let eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) : value list * environment = 
   let newEnv = ref env in
   let rec aux l = match l with
     | [] -> []
@@ -34,7 +31,7 @@ let rec get_function_label str values env : string * environment = match env wit
 (* process_command va traiter les commandes primitives concernant une fourmi*)
 let rec process_command cmd file_out env = match cmd with
 	| Move(((func_name, sp1),(arg_list, sp3))) -> (*les sp sont les Span : on ne les utilise pas*)
-        let l_val = eval_list arg_list env in
+        let l_val, new_env = eval_list arg_list env in
         let (label, new_env) = get_function_label func_name l_val env in
         fprintf file_out "Move %t" label;
         new_env
