@@ -5,9 +5,9 @@ open Printf;;
 let rec processProgram (program,span:Ast.program CodeMap.Span.located) =  ()
 
 let rec processCommand comm out_chan env = match comm with
-	| Move(((str,sp1),([expr, sp2],sp3))) ->
-        let lVal = listEval expr env in
-        let (label, newEnv) = getFunctionLabel str lVal env in
+	| Move(((nom_fonction,sp1),([liste_arg, sp2],sp3))) -> (*les sp sont les Span : on ne les utilise pas*)
+        let l_val = listEval liste_arguments env in
+        let (label, new_env) = getFunctionLabel nom_fonction l_val env in
         fprintf  out_chan "Move %t" label;
         newEnv
 	| Mark((i, sp)) ->
@@ -16,21 +16,21 @@ let rec processCommand comm out_chan env = match comm with
 	| Unmark((i, sp)) ->
         fprintf out_chan "Unmark i";
         env
-	| Pickup(str,expr) ->
-        let lVal = listEval expr env in
-        let (label, newEnv) = getFunctionLabel str lVal env in
+	| Pickup(nom_fonction,liste_arg) ->
+        let l_val = listEval liste_arg env in
+        let (label, new_env) = getFunctionLabel nom_fonction l_val env in
         fprintf  out_chan "Pickup %t" label;
-        newEnv
+        new_env
 	| Turn(dir, sp) ->
         fprintf out_chan "Turn %t" dir;
         env
 	| Sense(sensd, condition, strOui, exprOui, strNon, exprNon) ->
         let lValOui = listEval exprOui env in
-        let (labelOui, newEnv) = getFunctionLabel strOui lValOui env in
-        let lValNon = listEval exprNon newEnv in
-        let (labelOui, newEnv2) = getFunctionLabel strOui lValNon newEnv in
+        let (labelOui, new_env) = getFunctionLabel strOui lValOui env in
+        let lValNon = listEval exprNon new_env in
+        let (labelOui, new_env2) = getFunctionLabel strOui lValNon new_env in
 
-        fprintf out_chan "Sense %t %t %t %t" sesd labelOui labelNon condition;
+        fprintf out_chan "Sense %t %t %t %t" sensd labelOui labelNon condition;
 
 
 
