@@ -33,7 +33,7 @@ type expression =
     | Func          fun <ident>(<ident*,>) {<program>}
 
 type operation =
-	| Add			add <int <int>
+	| Add			add <int> <int>
 	| Sub			sub <int> <int>
 	| Mul			mul <int> <int>
 	| Div			div <int> <int>
