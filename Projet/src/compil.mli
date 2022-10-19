@@ -6,7 +6,7 @@ type function_env = string * (value list) * string list (* nom de la fct, les ar
 type environment = value_env * function_env
 
 val process_program : program -> environment ->out_channel -> unit
-val eval : expression Span.located -> environment -> value
+val eval : expression Span.located -> environment -> value * environment
 val eval_list : expression Span.located list-> environment -> value list
 val create_function_label : string -> (value list) -> environment -> out_channel -> environment (* Met à jour l'environnement de fonction *)
 val get_function_label : string -> (value list) -> environment -> string * environment

@@ -6,29 +6,27 @@ type value_env = (string * value) list
 type function_env = (string * (value list) * string) list (* nom de la fct, les arguments en value, le label *)
 type environment = value_env * function_env
 
+let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
-(* let rec eval (expr:expression Span.located) (env:environment) (out:out_channel) = match expr with
-  | Const(v,_),_ ->  v,env
-  | Var((str,_),exprsp),_ -> let (v,newEnv) = eval exprsp env out in (Unit, bind_value str v newEnv)
-  | _ -> failwith "WIP" *)
+let rec eval (expr : expression Span.located) (env : environment) :  = match expr with
+  | Const(v, _),_ ->  v, env
+  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env out in (Unit, bvalue * environmentind_value str v new_env)
+  | _ -> failwith "WIP"
 
-let rec eval_list list env = match list with
+let rec eval_list list env : value list = match list with
   |[] -> []
   |a::b -> (eval a env) :: (eval_list b env)
 
-  
-let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
-
-let rec get_function_label str values env = match env with
-    | (_,[]) -> (str,[str,values,str])
-    | (_, a::b) -> let (name, arg, labels) = a in
-                    if str = name && values = arg then (label, env)
-                    else get_function_label str values b
+let rec get_function_label str values env : string * environment = match env with
+    | (val_env,[]) -> (str,(val_env,[(str,values,str)]))
+    | (val_env, a::b) -> let (name, arg, label) = a in
+                    if str = name && values = arg then (label, (val_env,a::b))
+                    else get_function_label str values (val_env,b)
 
 
 (* process_command va traiter les commandes primitives concernant une fourmi*)
 let rec process_command cmd file_out env = match cmd with
-	| Move(((func_name, sp1),([arg_list, sp2], sp3))) -> (*les sp sont les Span : on ne les utilise pas*)
+	| Move(((func_name, sp1),(arg_list, sp3))) -> (*les sp sont les Span : on ne les utilise pas*)
         let l_val = eval_list arg_list env in
         let (label, new_env) = get_function_label func_name l_val env in
         fprintf file_out "Move %t" label;
