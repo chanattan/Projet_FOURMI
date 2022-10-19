@@ -1,7 +1,82 @@
+Strategie : *
+
+
 fun main(){
-	
+    let orientation = 0;
+    sense(AHEAD, IS_HOME, go_out, [orientation], explorer, [orientation]));
 };
 
 fun check_if_food_around(){
 	
-}
+};
+
+fun go_out(orientation){
+    drop
+    move(change_dir, [orientation]);
+};
+
+fun change_dirL(orientation){
+    turn(Left);
+    let orientation = orientation +1;
+    if(eq(orientation, 6)){
+        let orientation=0;
+    };
+
+};
+
+fun explorer(orientation){
+    sense(HERE, IS_FRIEND_WITH_FOOD, revenir,[orientation], decouvrir, [orientation]);
+};
+
+fun decouvrir(orientation){
+    pickup(rien,[]);
+    if(IS_MARKER 5){
+
+    };
+    else{
+        marquer(orientation)
+        mark 5;
+    }
+
+    flip(2, change_dirL, [], go_out,[]);
+
+};
+
+fun revenir(orientation){
+    let l = lire();
+    mark 4;
+    let newO = add 3 l;
+    let orientation = mod newO 6;
+    move(go_out,[orientation]);
+};
+
+
+fun lire(orientation){
+    let val = 0;
+    let i = 0;
+    let pui = 1;
+    while(lt i 2){
+        let pui =  mul pui 2;
+        let m = IS_MARKER i;
+        let m = mul m pui
+        let val = add val m
+        let i = add i 1;
+    };
+    val;
+};
+
+fun marquer(orientation){
+    let i = 0;
+    while(lt i 2){
+        if(eq mod orientation 2,1){
+            mark i;
+        }
+        let orientation = div orientation 2;
+        let reste = mod orientation 2
+        let orientation = sub orientation reste;
+        let i = add i 1;
+    };
+};
+
+fun rien(){
+};
