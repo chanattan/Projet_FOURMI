@@ -12,15 +12,15 @@ type environment = value_env * function_env
   | Var((str,_),exprsp),_ -> let (v,newEnv) = eval exprsp env out in (Unit, bind_value str v newEnv)
   | _ -> failwith "WIP" *)
 
-let rec eval_list list env = match list with
+let rec eval_list lis env = match lis with
   |[] -> []
   |a::b -> (eval a env) :: (eval_list b env)
 
-  
+
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
 let rec get_function_label str values env = match env with
-    | (_,[]) -> (str,[str,values,str])
+    | (_,[]) -> (str,[(str,values,str)])
     | (_, a::b) -> let (name, arg, labels) = a in
                     if str = name && values = arg then (label, env)
                     else get_function_label str values b
@@ -59,7 +59,7 @@ let rec process_program (Program(program):Ast.program) = match program with
   |expr::q, sp -> let v = eval expr in (process_program (Program(q, sp)))
 
 
-let rec process_compare comp file_out = match comp with
+let rec process_compare (comp : compare) (file_out : out_channel) : bool = match comp with
   | Eq(expr_left, expr_right) ->  let v1 = eval(expr_left) in
                                   let v2 = eval(expr_right) in
                                   if v1=v2 then true
@@ -80,4 +80,18 @@ let rec process_compare comp file_out = match comp with
                                   let v2 = eval(expr_right) in
                                   if v1>v2 then true
                                   else false
+
+let process_condition (condi : cond) (file_out : out_channel)  : unit = match condi with
+	| Friend -> fprintf file_out "Friend"
+	| Foe -> fprintf file_out "Foe"
+	| FriendWithFood -> fprintf file_out "FriendWithFood"
+	| FoeWithFood -> fprintf file_out "FoeWithFood"
+	| Food -> fprintf file_out "Food"
+	| Rock -> fprintf file_out "Rock"
+	| Marker(i)  -> fprintf file_out "Marker %t" i
+	| FoeMarker -> fprintf file_out "FoeMarker"
+	| Home -> fprintf file_out "Home"
+	| FoeHome -> fprintf file_out "FoeHome"
+
+
 
