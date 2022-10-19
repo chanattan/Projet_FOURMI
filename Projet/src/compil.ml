@@ -8,14 +8,21 @@ type environment = value_env * function_env
 
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
-let rec eval (expr : expression Span.located) (env : environment) :  = match expr with
+let rec eval (expr : expression Span.located) (env : environment) (file: out_channel) = match expr with
   | Const(v, _),_ ->  v, env
-  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env out in (Unit, bvalue * environmentind_value str v new_env)
+  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env file in (Unit, bvalue * environmentind_value str v new_env)
   | _ -> failwith "WIP"
 
-let rec eval_list list env : value list = match list with
+(* let rec eval_list list env : value list = match list with
   |[] -> []
-  |a::b -> (eval a env) :: (eval_list b env)
+  |a::b -> (eval a env) :: (eval_list b env) *)
+
+let eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) = 
+  let newEnv = ref env in
+  let rec aux l = match l with
+    | [] -> []
+    | expr::q -> let v,tempEnv = eval expr (!newEnv) file in newEnv := tempEnv ; v::(aux q)
+  in (aux list,!newEnv)
 
 let rec get_function_label str values env : string * environment = match env with
     | (val_env,[]) -> (str,(val_env,[(str,values,str)]))
@@ -52,9 +59,9 @@ let rec process_command cmd file_out env = match cmd with
         let (label_false, new_env2) = get_function_label func_name_true l_val_false new_env in
         fprintf file_out "Sense %t %t %t %t" sensd label_true label_false condition
 
-let rec process_program (Program(program):Ast.program) = match program with
+let rec process_program (Program(program):Ast.program) (env: environment) (file: out_channel) = match program with
   |[],_ -> print_string "Fin de la compilation"
-  |expr::q, sp -> let v = eval expr in (process_program (Program(q, sp)))
+  |expr::q, sp -> let v = eval expr in (process_program (Program(q, sp)) env file)
 
 
 let rec process_compare comp file_out = match comp with
@@ -78,4 +85,3 @@ let rec process_compare comp file_out = match comp with
                                   let v2 = eval(expr_right) in
                                   if v1>v2 then true
                                   else false
-
