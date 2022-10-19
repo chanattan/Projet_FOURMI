@@ -93,5 +93,12 @@ let process_condition (condi : cond) (file_out : out_channel)  : unit = match co
 	| Home -> fprintf file_out "Home"
 	| FoeHome -> fprintf file_out "FoeHome"
 
+let process_operation (op : operation) = match op with
+    | Add(v1, v2) -> v1 + v2
+    | Sub(v1, v2) -> v1 - v2
+    | Mul(v1, v2) -> v1 * v2
+    | Div(v1, v2) -> v1 / v2
+    | Mod(v1, v2) -> v1 mod v2
+
 
 
