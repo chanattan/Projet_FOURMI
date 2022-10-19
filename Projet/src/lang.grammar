@@ -33,11 +33,11 @@ type expression =
     | Func          fun <ident>(<ident*,>) {<program>}
 
 type operation =
-	| Add			add <int> <int>
-	| Sub			sub <int> <int>
-	| Mul			mul <int> <int>
-	| Div			div <int> <int>
-	| Mod			mod <int> <int>
+	| Add			add <expression> <expression>
+	| Sub			sub <expression> <expression>
+	| Mul			mul <expression> <expression>
+	| Div			div <expression> <expression>
+	| Mod			mod <expression> <expression>
 
 type cond =
 	| Friend 			IS_FRIEND
@@ -46,7 +46,7 @@ type cond =
 	| FoeWithFood		IS_FOE_WITH_FOOD
 	| Food				IS_FOOD
 	| Rock				IS_ROCK
-	| Marker			IS_MARKER <int>
+	| Marker			IS_MARKER <expression>
 	| FoeMarker			IS_FOE_MARKER
 	| Home				IS_HOME
 	| FoeHome			IS_FOE_HOME
@@ -64,8 +64,8 @@ type sensedir =
 type value =
 	| Unit		unit
     | Int   	<int>
-    | Bool  	<bool>
+    | Bool  	<boolean>
 
-type bool =
+type boolean =
     | True  true
     | False false

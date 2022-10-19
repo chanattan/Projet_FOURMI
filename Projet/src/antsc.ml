@@ -18,7 +18,7 @@ let process_file filename =
   (* Parse le fichier. *)
   let (program, span) = Parser.parse_program lexer in
   printf "successfully parsed the following program at position %t:\n%t\n" (CodeMap.Span.print span) (Ast.print_program program) ;
-  let fOut = open_out "out.brain" in Compil.processProgram (program) ([],[]) fOut
+  let fOut = open_out "out.brain" in Compil.start_program (program) ([],[]) fOut; close_out fOut
 
 (* Le point de départ du compilateur. *)
 let _ =
