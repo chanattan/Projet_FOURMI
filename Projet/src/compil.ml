@@ -2,12 +2,22 @@ open Ast;;
 open Printf;;
 open CodeMap;;
 
-type valueEnv = (string * value) list
-type functionEnv = (string * (value list) * string) list (* nom de la fct, les arguments en value, le label *)
-type environment = valueEnv * functionEnv
+type value_env = (string * value) list
+type function_env = (string * (value list) * string) list (* nom de la fct, les arguments en value, le label *)
+type environment = value_env * function_env
 
 
-let bind_value (str:string) (v:value) (env:environment) : environment = let (valEnv, funEnv) = env in ((str,v)::valEnv, funEnv)
+(* let rec eval (expr:expression Span.located) (env:environment) (out:out_channel) = match expr with
+  | Const(v,_),_ ->  v,env
+  | Var((str,_),exprsp),_ -> let (v,newEnv) = eval exprsp env out in (Unit, bind_value str v newEnv)
+  | _ -> failwith "WIP" *)
+
+let rec eval_list list env = match list with
+  |[] -> []
+  |a::b -> (eval a env) :: (eval_list b env)
+
+  
+let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
 let rec get_function_label str values env = match env with
     | (_,[]) -> (str,[str,values,str])
@@ -43,18 +53,6 @@ let rec process_command cmd file_out env = match cmd with
         let l_val_false = eval_list arg_list_false new_env in
         let (label_false, new_env2) = get_function_label func_name_true l_val_false new_env in
         fprintf file_out "Sense %t %t %t %t" sensd label_true label_false condition
-
-
-
-(* let rec eval (expr:expression Span.located) (env:environment) (out:out_channel) = match expr with
-  | Const(v,_),_ ->  v,env
-  | Var((str,_),exprsp),_ -> let (v,newEnv) = eval exprsp env out in (Unit, bind_value str v newEnv)
-  | _ -> failwith "WIP" *)
-
-
-  let rec eval_list list env = match list with
-  |[] -> []
-  |a::b -> (eval a env) :: (eval_list b env)
 
 let rec process_program (Program(program):Ast.program) = match program with
   |[],_ -> print_string "Fin de la compilation"
