@@ -23,11 +23,6 @@ let eval_list (list: (expression Span.located) list) (env: environment) (file: o
 
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
-let rec get_function_label str values env = match env with
-    | (_,[]) -> (str,[(str,values,str)])
-    | (_, a::b) -> let (name, arg, labels) = a in
-                    if str = name && values = arg then (label, env)
-                    else get_function_label str values b
 
 
 (* process_command va traiter les commandes primitives concernant une fourmi*)
