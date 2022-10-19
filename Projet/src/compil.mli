@@ -7,4 +7,9 @@ type environment = valueEnv * functionEnv
 
 val processProgram : program -> unit
 val eval : expression Span.located -> environment -> value
-val createFunctionLabel : string -> (value list) -> environment -> functionEnv (* Met à jour l'environnement de fonction *)
+val Listeval : expression Span.located list-> environment -> value list
+val createFunctionLabel : string -> (value list) -> environment -> out_channel -> environment (* Met à jour l'environnement de fonction *)
+val getFunctionLabel : string -> (value list) -> environment -> string * environment
+
+
+val processCommand : command -> environment -> environment
