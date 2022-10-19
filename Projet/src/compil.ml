@@ -6,6 +6,17 @@ type value_env = (string * value) list
 type function_env = (string * (value list) * string) list (* nom de la fct, les arguments en value, le label *)
 type environment = value_env * function_env
 
+
+(* let rec eval (expr:expression Span.located) (env:environment) (out:out_channel) = match expr with
+  | Const(v,_),_ ->  v,env
+  | Var((str,_),exprsp),_ -> let (v,newEnv) = eval exprsp env out in (Unit, bind_value str v newEnv)
+  | _ -> failwith "WIP" *)
+
+let rec eval_list lis env = match lis with
+  |[] -> []
+  |a::b -> (eval a env) :: (eval_list b env)
+
+
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
 let rec eval (expr : expression Span.located) (env : environment) (file: out_channel) : value * environment = match expr with
@@ -56,12 +67,12 @@ let rec process_command cmd file_out env = match cmd with
         let (label_false, new_env2) = get_function_label func_name_true l_val_false new_env in
         fprintf file_out "Sense %t %t %t %t" sensd label_true label_false condition
 
-let rec process_program (Program(program):Ast.program) (env: environment) (file: out_channel) = match program with
+let rec process_program (Program(program):Ast.program) = match program with
   |[],_ -> print_string "Fin de la compilation"
-  |expr::q, sp -> let v = eval expr in (process_program (Program(q, sp)) env file)
+  |expr::q, sp -> let v = eval expr in (process_program (Program(q, sp)))
 
 
-let rec process_compare comp file_out = match comp with
+let rec process_compare (comp : compare) (file_out : out_channel) : bool = match comp with
   | Eq(expr_left, expr_right) ->  let v1 = eval(expr_left) in
                                   let v2 = eval(expr_right) in
                                   if v1=v2 then true
@@ -82,3 +93,25 @@ let rec process_compare comp file_out = match comp with
                                   let v2 = eval(expr_right) in
                                   if v1>v2 then true
                                   else false
+
+let process_condition (condi : cond) (file_out : out_channel)  : unit = match condi with
+	| Friend -> fprintf file_out "Friend"
+	| Foe -> fprintf file_out "Foe"
+	| FriendWithFood -> fprintf file_out "FriendWithFood"
+	| FoeWithFood -> fprintf file_out "FoeWithFood"
+	| Food -> fprintf file_out "Food"
+	| Rock -> fprintf file_out "Rock"
+	| Marker(i)  -> fprintf file_out "Marker %t" i
+	| FoeMarker -> fprintf file_out "FoeMarker"
+	| Home -> fprintf file_out "Home"
+	| FoeHome -> fprintf file_out "FoeHome"
+
+let process_operation (op : operation) = match op with
+    | Add(v1, v2) -> v1 + v2
+    | Sub(v1, v2) -> v1 - v2
+    | Mul(v1, v2) -> v1 * v2
+    | Div(v1, v2) -> v1 / v2
+    | Mod(v1, v2) -> v1 mod v2
+
+
+
