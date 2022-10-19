@@ -57,3 +57,27 @@ let rec process_command cmd file_out env = match cmd with
 let rec process_program (Program(program):Ast.program) = match program with
   |[],_ -> print_string "Fin de la compilation"
   |expr::q, sp -> let v = eval expr in (process_program (Program(q, sp)))
+
+
+let rec process_compare comp file_out = match comp with
+  | Eq(expr_left, expr_right) ->  let v1 = eval(expr_left) in
+                                  let v2 = eval(expr_right) in
+                                  if v1=v2 then true
+                                  else false
+  | Inf(expr_left, expr_right) ->  let v1 = eval(expr_left) in
+                                  let v2 = eval(expr_right) in
+                                  if v1<=v2 then true
+                                  else false
+  | Sup(expr_left, expr_right) ->  let v1 = eval(expr_left) in
+                                  let v2 = eval(expr_right) in
+                                  if v1=>v2 then true
+                                  else false
+  | StInf(expr_left, expr_right) ->  let v1 = eval(expr_left) in
+                                  let v2 = eval(expr_right) in
+                                  if v1>v2 then true
+                                  else false
+  | StSup(expr_left, expr_right) ->  let v1 = eval(expr_left) in
+                                  let v2 = eval(expr_right) in
+                                  if v1>v2 then true
+                                  else false
+
