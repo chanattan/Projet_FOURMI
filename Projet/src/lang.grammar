@@ -30,8 +30,13 @@ type expression =
 	| Command		<command>
 	| Apply 		<ident>(<expression*,>)
     | Func          fun <ident>(<expression*,>) {<program>}
-	| Add			<int> + <int>
-	| Sub			<int> - <int>
+
+type operation =
+	| Add			add <int <int>
+	| Sub			sub <int> <int>
+	| Mul			mul <int> <int>
+	| Div			div <int> <int>
+	| Mod			mod <int> <int>
 
 type cond =
 	| Friend 			IS_FRIEND
