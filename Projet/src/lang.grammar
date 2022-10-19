@@ -53,8 +53,9 @@ type sensedir =
 	| Ahead				AHEAD
 
 type value =
-    | Int   <int>
-    | Bool  <bool>
+	| Unit		unit
+    | Int   	<int>
+    | Bool  	<bool>
 
 type bool =
     | True  true
