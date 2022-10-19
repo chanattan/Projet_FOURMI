@@ -13,3 +13,4 @@ val get_function_label : string -> (value list) -> environment -> string * envir
 
 
 val process_command : command -> environment -> environment
+val process_compare : command -> bool

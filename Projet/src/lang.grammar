@@ -15,6 +15,7 @@ type command =
 	| Pickup		pickup(<ident>, [<expression*,>])
 	| Turn			turn(<direction>)
 	| Sense 		sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+	| Flip			flip(<int>, <ident>, [<expression*,>], <ident>, [<expression*,>])
 
 
 type expression =
