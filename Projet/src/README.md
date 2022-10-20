@@ -185,6 +185,9 @@ On cherche une variable dans un environnement en partant du début de la liste. 
 
 - L'environnement est modifié à chaque évalution d'expression
 
+## III/ Tests unaires
+
+Dans les fichiers test_
 
 ## III/ Idées d'amélioration
 
