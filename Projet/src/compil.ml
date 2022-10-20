@@ -139,9 +139,13 @@ and process_program (Program(program) : Ast.program) (env : environment) (file :
                 let bool_value, new_env = eval (cond, spc) env file in
                         (match bool_value with
                         (*si la condition cond est vraie*)
-                        | Bool(True, _) -> process_program prog_if new_env file (*on évalue le bloc if dans new_env*) 
+                        | Bool(True, _) -> let value, new_env2 =
+                                process_program prog_if new_env file in (*on évalue le bloc if dans new_env*) 
+                                process_program Prog(q, sp) new_env2 file (*on évalue le reste qui suit la condition*)
                         (*sinon si cond fausse*)
-                        | Bool(False, _) -> process_program prog_el new_env file (*on évalue le bloc else dans new_env*)
+                        | Bool(False, _) -> let value, new_env2 =
+                                process_program prog_el new_env file in (*on évalue le bloc else dans new_env*)
+                                process_program Prog(q, sp) new_env2 file
                         | _ -> Span.print spc stderr; failwith "[Type Error] :\
                         the return value of the expression is not a boolean.\n")
         | _, _ -> let value, new_env = eval expr_fst env file in (*exécution de la première expression si ce n'est pas de la forme if else*)
