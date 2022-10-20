@@ -3,10 +3,10 @@ type program =
 
 type compare =
     | Eq            eq <expression>, <expression>
-	| Inf           lt <expression>, <expression>
-    | Sup           gt <expression>, <expression>
-	| StInf			le <expression>, <expression>
-	| StSup			ge <expression>, <expression>
+	| Inf           le <expression>, <expression>
+    | Sup           ge <expression>, <expression>
+	| StInf			lt <expression>, <expression>
+	| StSup			gt <expression>, <expression>
 
 
 type command = 
