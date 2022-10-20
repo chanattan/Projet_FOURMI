@@ -4,5 +4,12 @@ fun main(){
     };
     else{
         turn(R)
+    };
+
+    if(false){
+        turn(R)
+    };
+    else{
+        drop()
     }
 }

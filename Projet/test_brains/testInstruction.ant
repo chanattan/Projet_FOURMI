@@ -1,0 +1,6 @@
+fun main(){
+	turn(R);
+	drop();
+	turn(L);
+	turn(R)
+}
