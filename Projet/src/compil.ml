@@ -11,6 +11,12 @@ let fun_counter = ref 0
 let bind_value (str:string) (v:value) (env:environment) : environment =
         let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
+let rec process_deref ((str,sp):string Span.located) (val_env : value_env) : value = 
+    match val_env with
+    | [] -> Span.print sp stderr; failwith "[Error] Trying to dereference a variable that is not initialized.\n"
+    | (name, v)::_ when name = str -> v
+    | _::q -> process_deref (str,sp) q
+
 (** *)
 let process_sensedir (sensed : sensedir) : string = match sensed with
   | LeftAhead -> "LeftAhead"
@@ -38,10 +44,8 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
         | Const(v, _), _ ->  v, env
         | Var((str, _), exprsp), _ ->
                 let (v, new_env) = eval exprsp env file in (Unit, bind_value str v new_env)
-        | Deref(str, sp), _ -> let value_env, func_env = env in
-                (match value_env with
-                | [] -> Span.print sp stderr; failwith "[Error] Trying to dereference a variable that is not initialized.\n"
-                | (ident, value)::l -> if ident = str then value, env else eval expr (l, func_env) file)
+        | Deref(str, sp), _ -> let val_env, func_env = env in
+            let v = process_deref (str,sp) val_env in v,env
         | Compare(comp, sp), _ ->
                 let bool_val,new_env = (process_compare comp env file) in
                         (match bool_val with

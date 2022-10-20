@@ -38,7 +38,8 @@ let _ =
       eprintf "Lex error: %t: %t\n" (CodeMap.Span.print span) (Lexer.print_error e)
     | Parser.Error (e, span) ->
       eprintf "Parse error: %t: %t\n" (CodeMap.Span.print span) (Parser.print_error e)
-    | Failure(_) -> (* Dans le cas d'un crash *)
-      let _ = Sys.command "rm -f *.temp" in () (* On clean tous les fichiers .temp*)
+    | Failure(str) -> (* Dans le cas d'un crash *)
+      let _ = Sys.command "rm -f *.temp" in (* On clean tous les fichiers .temp*)
+      eprintf " : %s" str
 
   end
