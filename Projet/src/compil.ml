@@ -43,7 +43,7 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                         | true -> Bool(True, sp), new_env
                         | false -> Bool(False, sp), new_env)
         | Operation(op, _), _ -> (process_operation op env file)
-        | Command(cmd, _), _ -> let value,new_env = (process_command cmd env file) in value, new_env
+        | Command(cmd, _), _ -> process_command cmd env file
         (*If et Else sont gérés dans process_program pour prévoir 2 expressions*)
         | While((exp, spe), (prog, spp)), _ ->
                 let bool_val, new_env = eval (exp, spe) env file in
@@ -197,25 +197,24 @@ and eval_list (list: (expression Span.located) list) (env: environment) (file: o
 and process_command (cmd: command) (env: environment) (file: out_channel) : value * environment =
         match cmd with
 	| Move((name,_), (arg_list,_)) -> 
-        let current_label,goto_label,_,_ = process_apply_nowrite name arg_list env file in
-        fprintf file "\tMove %s\n" goto_label ; (* On écrit le move avec le potentiel appel*)
-        fprintf file "\tGoto %s\n" current_label; (* On exécute la suite si on a pas eu d'appel *)
-        fprintf file "%s:\n" current_label; (* Le label de retour dans tout les cas (le goto précédent ainsi que le retour de la fonction) *)
-
-        Unit, env (* Obliger de renvoyer Unit comme on ne peut pas déterminer statiquement. 
+                let current_label,goto_label,_,_ = process_apply_nowrite name arg_list env file in
+                fprintf file "\tMove %s\n" goto_label ; (* On écrit le move avec le potentiel appel*)
+                fprintf file "\tGoto %s\n" current_label; (* On exécute la suite si on a pas eu d'appel *)
+                fprintf file "%s:\n" current_label; (* Le label de retour dans tout les cas (le goto précédent ainsi que le retour de la fonction) *)
+                Unit, env (* Obliger de renvoyer Unit comme on ne peut pas déterminer statiquement. 
        On ne prend pas en compte le changement d'environnement comme on est pas sûr à la compil du changement *)
 	| Mark(expr, sp) -> ((*i représente le ième bit à modifier sur la case marquée*)
-        let value, new_env = eval (expr,sp) env file in match value with
-          | Int(i,_) -> fprintf file "\tMark %d\n" i ; Unit, new_env
-          | _ -> Span.print sp stderr ; failwith "[Type Error] : there was an error marking : type is not an int")
+                let value, new_env = eval (expr,sp) env file in match value with
+                | Int(i,_) -> fprintf file "\tMark %d\n" i ; Unit, new_env
+                | _ -> Span.print sp stderr ; failwith "[Type Error] : there was an error marking : type is not an int")
 	| Unmark(expr, sp) -> ((*de même pour unmark*)
-        let value, new_env = eval (expr,sp) env file in match value with 
-          | Int(i,_) -> fprintf file "\tUnmark %d\n" i; Unit, new_env
-          | _ -> Span.print sp stderr ; failwith "[Type Error] : there was an error unmarking : type is not an int")
+                let value, new_env = eval (expr,sp) env file in match value with 
+                | Int(i,_) -> fprintf file "\tUnmark %d\n" i; Unit, new_env
+                | _ -> Span.print sp stderr ; failwith "[Type Error] : there was an error unmarking : type is not an int")
 	| Pickup((fun_name,_), (arg_list,_)) ->
                 let value,new_env = process_apply fun_name arg_list env file in value,new_env (* Ecrire le Pickup *)
 	| Turn(dir, _) -> (*dir représente la direction dans laquelle la fourmi va tourner*)
-        (match dir with
+                (match dir with
                 | Left -> fprintf file "\tTurn Left\n"
                 | Right -> fprintf file "\tTurn Right\n");
         Unit,env
