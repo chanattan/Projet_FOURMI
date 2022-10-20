@@ -44,7 +44,14 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                         | false -> Bool(False, sp), new_env)
         | Operation(op, _), _ -> (process_operation op env file)
         | Command(cmd, _), _ -> process_command cmd env file
-        (*If et Else sont gérés dans process_program pour prévoir 2 expressions*)
+        | If((cond, spc), (prog, _)), _ ->
+                let bool_val, new_env = eval (cond, spc) env file in
+                        (match bool_val with
+                        | Bool(True, _) -> process_program prog new_env file
+                        | Bool(False, sp) -> Bool(False, sp), new_env
+                        | _ -> Span.print spc stderr; failwith "[Type Error] :\
+                                 the return value of the expression is not a boolean.\n")
+        (*Else est géré dans process_program pour prévoir l'expression précédente si c'est un if ou non*)
         | While((exp, spe), (prog, spp)), _ ->
                 let bool_val, new_env = eval (exp, spe) env file in
                 (match bool_val with
@@ -74,7 +81,7 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                         Inside do while loop the expression is not type unit.\n")
         | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
         (*Func est déjà traité dans la fonction start_program*)
-        | _ -> failwith "WIP"
+        | _ -> let exp, _ = expr in print_expression exp stderr; failwith "WIP"
 
 and process_condition (condi : cond) (env : environment) (file_out : out_channel) : string * environment = match condi with
   | Friend -> "Friend", env
@@ -162,26 +169,26 @@ and process_program (Program(program) : Ast.program) (env : environment) (file :
               else value, new_env (*On utilise un comportement similaire à Caml qui retourne la dernière valeur qui n'est pas de type unit.*)
 
 and process_compare (comp : compare) (env:environment) (file : out_channel) : bool*environment = match comp with
-| Eq(expr_left, expr_right) ->  let v1,new_env = eval (expr_left) env file in (*check type != unit*)
-                                let v2,new_env2 = eval (expr_right) new_env file in
-                                if v1=v2 then true,new_env2
-                                else false,new_env2
-| Inf(expr_left, expr_right) -> let v1,new_env = eval (expr_left) env file in
-                                let v2,new_env2 = eval (expr_right) new_env file in
-                                if v1<=v2 then true,new_env2
-                                else false,new_env2
-| Sup(expr_left, expr_right) -> let v1,new_env = eval (expr_left) env file in
-                                let v2,new_env2 = eval (expr_right) new_env file in
-                                if v1>=v2 then true,new_env2
-                                else false,new_env2
-| StInf(expr_left, expr_right) ->  let v1,new_env = eval (expr_left) env file in
-                                let v2,new_env2 = eval (expr_right) new_env file in
-                                if v1>v2 then true,new_env2
-                                else false,new_env2
-| StSup(expr_left, expr_right) ->  let v1,new_env = eval (expr_left) env file in
-                                let v2,new_env2 = eval (expr_right) new_env file in
-                                if v1>v2 then true,new_env2
-                                else false,new_env2
+| Eq(expr_left, expr_right) ->
+        let v1,new_env = eval (expr_left) env file in (*check type != unit*)
+        let v2,new_env2 = eval (expr_right) new_env file in
+        v1 = v2, new_env2
+| Inf(expr_left, expr_right) ->
+        let v1,new_env = eval (expr_left) env file in
+        let v2,new_env2 = eval (expr_right) new_env file in
+        v1 <= v2, new_env2
+| Sup(expr_left, expr_right) ->
+        let v1,new_env = eval (expr_left) env file in
+        let v2,new_env2 = eval (expr_right) new_env file in
+        v1 >= v2, new_env2
+| StInf(expr_left, expr_right) ->
+        let v1,new_env = eval (expr_left) env file in
+        let v2,new_env2 = eval (expr_right) new_env file in
+        v1 > v2, new_env2
+| StSup(expr_left, expr_right) ->
+        let v1,new_env = eval (expr_left) env file in
+        let v2,new_env2 = eval (expr_right) new_env file in
+        v1 > v2, new_env2
 
 and eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) : value list * environment = 
   let new_env = ref env in

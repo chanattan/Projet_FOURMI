@@ -2,9 +2,6 @@ fun main(){
     if (true) {
         turn(L)
     };
-    else{
-        turn(R)
-    };
 
     if(false){
         turn(R)
