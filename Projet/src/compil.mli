@@ -11,8 +11,8 @@ val start_program : program -> environment -> out_channel -> unit
 val eval : expression Span.located -> environment -> out_channel -> value * environment
 val eval_list : expression Span.located list-> environment -> out_channel -> value list * environment
 
-val process_command : command -> out_channel -> environment -> environment
-val process_compare : compare -> out_channel -> bool
+val process_command : command -> environment -> out_channel -> value * environment
+val process_compare : compare -> environment ->out_channel -> bool*environment
 val process_apply : string -> (expression Span.located list) -> environment -> out_channel -> value * environment
-val process_condition : cond -> environment -> out_channel -> unit
+val process_condition : cond -> environment -> out_channel -> string * environment
 val process_operation : operation -> environment -> out_channel -> value * environment

@@ -11,12 +11,12 @@ type compare =
 
 type command = 
 	| Move			move(<ident>, [<expression*,>])
-	| Mark			mark(<int>)
-	| Unmark		unmark(<int>)
+	| Mark			mark(<expression>)
+	| Unmark		unmark(<expression>)
 	| Pickup		pickup(<ident>, [<expression*,>])
 	| Turn			turn(<direction>)
 	| Sense 		sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
-	| Flip			flip(<int>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+	| Flip			flip(<expression>, <ident>, [<expression*,>], <ident>, [<expression*,>])
 	| Drop			drop()
 
 
