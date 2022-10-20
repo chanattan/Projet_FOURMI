@@ -63,8 +63,8 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                 let value, new_env = process_program prog env file in
                 (match value with
                 | Unit -> let bool_val, new_env2 = eval (exp, spe) new_env file in (match bool_val with
-                | Bool(True, sp) -> (match exp with
-                 | Const(Bool(True, spb), _) -> Span.print spp stderr; failwith "[Type Error] :\
+                | Bool(True, _) -> (match exp with
+                 | Const(Bool(True, _), _) -> Span.print spp stderr; failwith "[Type Error] :\
                          infinite dowhile loop.\n"
                 | _ -> eval expr new_env2 file) (*on réevalue toute l'expression dans le nouvel environnement new_env2*)
                 | Bool(False, sp) -> Unit, env
@@ -133,15 +133,15 @@ and process_operation (op : operation) (env : environment) (file : out_channel) 
 and process_program (Program(program) : Ast.program) (env : environment) (file : out_channel) : value * environment = 
   match program with
     |[],_ -> Unit, env
-    |expr_fst::expr_scd::q, sp ->
+    |expr_fst::expr_scd::q, sp ->(
         match expr_fst, expr_scd with
-        | (If((cond, spc), (prog_if, spi)), _), (Else(prog_el, spe), _) -> (*cas if else qui doit prendre en compte 2 expressions*)
+        | (If((cond, spc), (prog_if, _)), _), (Else(prog_el, _), _) -> (*cas if else qui doit prendre en compte 2 expressions*)
                 let bool_value, new_env = eval (cond, spc) env file in
                         (match bool_value with
                         (*si la condition cond est vraie*)
-                        | Bool(True, _) -> process_program (prog_if, spi) new_env file (*on évalue le bloc if dans new_env*) 
+                        | Bool(True, _) -> process_program prog_if new_env file (*on évalue le bloc if dans new_env*) 
                         (*sinon si cond fausse*)
-                        | Bool(False, _) -> process_program (prog_el, spe) new_env file (*on évalue le bloc else dans new_env*)
+                        | Bool(False, _) -> process_program prog_el new_env file (*on évalue le bloc else dans new_env*)
                         | _ -> Span.print spc stderr; failwith "[Type Error] :\
                         the return value of the expression is not a boolean.\n")
         | _, _ -> let value, new_env = eval expr_fst env file in (*exécution de la première expression si ce n'est pas de la forme if else*)
@@ -149,7 +149,7 @@ and process_program (Program(program) : Ast.program) (env : environment) (file :
                 | Unit -> (process_program (Program(q, sp)) new_env file)
                 | _ -> if q <> [] then failwith "[Type Error] :\
                         There is a non-last return value that is not type unit.\n"
-                else value, new_env)
+                else value, new_env))
     |expr::q, sp -> let value, new_env = eval expr env file in (*évaluation cas une expression*)
         match value with
         | Unit -> (process_program (Program(q, sp)) new_env file)
