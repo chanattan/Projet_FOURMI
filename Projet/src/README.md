@@ -7,7 +7,7 @@ La grammaire est fournie dans le fichier lang.grammar.
 Le fichier en sortie est un .brain et contient le code de base compréhensible pour la fourmi
 
 ### Types de base :
-- < expression > : désigne une instruction du programme
+- < expression > : désigne un couple composé d'une instruction du programme et d'un span (pour localiser les erreurs)
 - < program > : ensemble de toutes les instructions qui composent le programme (liste non vide d'expression < expression >)
 - < value >: < int > : entiers
             < bool > : booleens
@@ -187,6 +187,16 @@ On cherche une variable dans un environnement en partant du début de la liste. 
 - Une même fonction peut être écrite plusieurs fois à la compilation si elle est appelée avec plusieurs arguments différents
 
 - L'environnement est modifié à chaque évalution d'expression
+
+- Lorsqu'on appelle une commande de base, on peut executer la fonction passée en argument avec ses paramètres mais on revient forcément à l'instruction de la commande de base après
+
+- Dans les instructions while, lorsqu'on évalue l'expression, on retourne un nouvel environnement dans lequel on appelle process program sur le corps de la boucle qui retourne un new_Env2 dans lequel on évalue une nouvelle fois < expression >, etc.
+Por le doWhile, on évalue le programme et on a un new_Env dans lequel on évalue la condition expr qui retourne une newEnv2 et un booleen qui si vaut true alors on reevalue l'ensemble de l'instruction (tout le doWhile) dans le nouvel environnement newEnv2. (on souligne le fait que l'evaluation dans newEnv2 garantit la terminsaison de la boucle s'il y a)
+(La derniere evaluation de toute l'expresssion pourrait aussi se faire dans new_Env, car la condition n'est supposée qu'être évaluée que en des booleens. Par sécurité, on crée un new_nEv2. Cette même remarque s'applique aussi pour le while)
+
+- Le compilateur cherche toujours à commencer par le main
+
+- Les span permettent de repérer les erreurs
 
 ## III/ Tests
 
