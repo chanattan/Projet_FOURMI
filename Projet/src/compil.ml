@@ -27,7 +27,7 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
   | Compare(comp, sp), _ -> let bool_val = (process_compare comp file) in (match bool_val with
                                                                 | true -> Bool(True, sp), env
                                                                 | false -> Bool(False, sp), env)
-  | Operation(op, _), _ -> (process_operation op env file), env
+  | Operation(op, _), _ -> (process_operation op env file)
   | Command(cmd, _), _ -> let new_env = (process_command cmd file env) in Unit, new_env
   | If((cond, spc), (prog, spp)), _ -> let bool_val, new_env = eval expr env file in (match bool_val with
                                                                 | Bool(True, sp) -> process_program prog new_env file
@@ -64,26 +64,26 @@ and process_condition (condi : cond) (env : environment) (file_out : out_channel
   | Home -> fprintf file_out "Home"
   | FoeHome -> fprintf file_out "FoeHome"
 
-and process_operation (op : operation) (env : environment) (file : out_channel) : value = match op with
+and process_operation (op : operation) (env : environment) (file : out_channel) : value * environment = match op with
 | Add((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
                                 let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                                                                | Int(i, spp), Int(y, _) -> Int(i + y, spp)
+                                                                                | Int(i, spp), Int(y, _) -> Int(i + y, spp), new_env2
                                                                                 | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to sum up two values.\n")
 | Sub((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
                                 let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i - y, spp)
+                                | Int(i, spp), Int(y, _) -> Int(i - y, spp), new_env2
                                 | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to substract two values.\n")
 | Mul((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
                                 let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i * y, spp)
+                                | Int(i, spp), Int(y, _) -> Int(i * y, spp), new_env2
                                 | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to multiply two values.\n")
 | Div((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
                                 let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i / y, spp)
+                                | Int(i, spp), Int(y, _) -> Int(i / y, spp), new_env2
                                 | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to divide two values.\n")
 | Mod((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
                                 let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i mod y, spp)
+                                | Int(i, spp), Int(y, _) -> Int(i mod y, spp), new_env2
                                 | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to use modulo.\n")
 
 and process_program (Program(program) : Ast.program) (env : environment) (file : out_channel) : value * environment = match program with
