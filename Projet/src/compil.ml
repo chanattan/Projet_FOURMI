@@ -153,7 +153,7 @@ and process_command (cmd : command) (file_out : out_channel) (env : environment)
 
 (** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié *)
 (** On va rajouter des labels pour s'occuper des sauts avant et après *)
-and process_apply (name:string) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value = 
+and process_apply (name:string) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value * environment = 
   let arg_names,prog = get_func_from_name name (val_env,fun_env) in (* On récupère les informations de la fonction *)
   let (arg_values,(new_val_env,new_fun_env)) = eval_list args_expr  (val_env,fun_env) file in (* On évalue nos arguments *)
   let apply_val_env,apply_fun_env = update_env_for_fun arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour juste pour la fonction*)
@@ -168,7 +168,7 @@ and process_apply (name:string) (args_expr:expression Span.located list) (val_en
   fprintf new_file "%s:\n\t" (goto_label) ; (* On écrit au début du nouveau fichier le label associé à l'appel de la fonction *)
   let v,post_env = process_program prog (apply_val_env,apply_fun_env) new_file in (* On process ce qui signifie qu'on écrit le programme dans le fichier *)
   fprintf new_file "Goto %s\n\t" (current_label) ; (* On écrit le goto de retour (comme le return) à la fin du nouveau fichier *)
-  v
+  v, post_env
 
 
 let start_program (prog : program) (env: environment) (file_out : out_channel) : unit =
