@@ -1,0 +1,15 @@
+fun main(){
+if(true){
+    drop();
+};
+else{
+    let ff = 14;
+};
+
+if(false){
+    drop;
+};
+else{
+    let ff = 14;
+};
+};

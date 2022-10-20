@@ -1,0 +1,13 @@
+fun main(){
+let i = 0;
+while(lt i 3){
+    if(false){
+        let u = true;
+        mark 1;
+    };
+    else{
+        let v = 321;
+    };
+    let i = add i 1;
+};
+};
