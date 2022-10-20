@@ -1,7 +1,9 @@
 fun main(){
-    retour()
+	retour();
+	turn(R);
+	retour()
 };
 
 fun retour(){
-    turn(L)
+	turn(L)
 }

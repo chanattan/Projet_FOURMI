@@ -6,6 +6,7 @@ type value_env = (string * value) list
 type function_env = (string * (string list) * program) list (* nom de la fct, les arguments en nom pour remplacer, le label *)
 type environment = value_env * function_env
 
+let fun_counter = ref 0
 
 let bind_value (str:string) (v:value) (env:environment) : environment =
         let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
@@ -294,8 +295,8 @@ and process_apply (name:string) (args_expr:expression Span.located list) (val_en
   (* Il faut écrire le goto avec le nouveau label, le nouveau label quelque part (dans un tout nouveau fichier unique à chaque fois que l'on re-fusionne à la fin) *)
   let current_label,goto_label,v,post_env = create_fun_label name prog (apply_val_env, apply_fun_env) in
 
-  fprintf file "Goto %s \n\t" goto_label ; (* On fait "l'appel" à la fonction en allant à son label *)
-  fprintf file "%s:\n\t" (current_label) ; (* On écrit dans le fichier le label de retour de la fonction ici *)
+  fprintf file "\tGoto %s \n" goto_label ; (* On fait "l'appel" à la fonction en allant à son label *)
+  fprintf file "%s:\n" (current_label) ; (* On écrit dans le fichier le label de retour de la fonction ici *)
   
   v, post_env
 
@@ -312,14 +313,14 @@ and process_apply_nowrite (name:string) (args_expr:expression Span.located list)
 (** Crée le label de la fonction associée avec ses arguments dans un autre fichier et 
     renvoie le nom du label crée ainsi que le label du retour (current(original) * goto(la fonction)) et la valeur de retour et l'environnement après l'application de la fonction*)
 and create_fun_label (name : string) (prog:program) ((apply_val_env,apply_fun_env):environment): string*string*value*environment = 
-  let time = Int.to_string (Float.to_int (Sys.time ())) in
-  let goto_label = "fun_"^name^time in (* On crée un label unique de la future fonction (avec le temps) *)
-  let current_label = "current_"^name^time in (* On crée le label de retour de la fonction (ici) *)
-  
-  let new_file = open_out_gen [Open_creat] 0o777 (goto_label^".temp") in (* On crée le flux pour le nouveau fichier *)
-  fprintf new_file "%s:\n\t" (goto_label) ; (* On écrit au début du nouveau fichier le label associé à l'appel de la fonction *)
+  let goto_label = "fun_"^name^Int.to_string (!fun_counter) in (* On crée un label unique de la future fonction (avec le temps) *)
+  let current_label = "current_"^name^Int.to_string (!fun_counter) in (* On crée le label de retour de la fonction (ici) *)
+  incr fun_counter ;
+
+  let new_file = open_out  (goto_label^".temp") in (* On crée le flux pour le nouveau fichier *)
+  fprintf new_file "%s:\n" (goto_label) ; (* On écrit au début du nouveau fichier le label associé à l'appel de la fonction *)
   let v,post_env = process_program prog (apply_val_env,apply_fun_env) new_file in (* On process ce qui signifie qu'on écrit le programme dans le fichier. L'environnement est *)
-  fprintf new_file "Goto %s\n\t" (current_label) ; (* On écrit le goto de retour (comme le return) à la fin du nouveau fichier *)
+  fprintf new_file "\tGoto %s\n" (current_label) ; (* On écrit le goto de retour (comme le return) à la fin du nouveau fichier *)
   close_out new_file ;
 
   current_label,goto_label,v,post_env
@@ -342,8 +343,9 @@ let start_program (prog : program) (env: environment) (file_out : string) : unit
           | _ -> aux (Program(next_prog,sp)) env_bis)
   in let new_env = aux prog env in 
   let file = open_out "main.temp" in  (* Notre premier fichier d'écriture, a priori ce sera le main *)
+  fprintf file "main:\n" ; 
   let _,_ = process_program (!main_prog) new_env file in (* évaluation de la fonction main*)
   close_out file ; (* On ferme le fichier qu'on avait ouvert *)
-  let _ = Sys.command ("for f in *.temp; do cat $f >> "^file_out^"; done") in (* On concatène les fichiers .temp dans file_out*)
+  let _ = Sys.command ("cat main.temp > "^file_out^";for f in fun_*.temp; do cat $f >> "^file_out^"; done") in (* On concatène les fichiers .temp dans file_out*)
   let _ = Sys.command "rm -f *.temp" in
   ()

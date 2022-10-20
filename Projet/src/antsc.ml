@@ -23,18 +23,22 @@ let process_file filename =
 (* Le point de départ du compilateur. *)
 let _ =
   (* On commence par lire le nom du fichier à compiler passé en paramètre. *)
-  if Array.length Sys.argv <= 1 then begin
+  let n = Array.length Sys.argv in
+  if n <= 1 then begin
     (* Pas de fichier... *)
     eprintf "no file provided.\n";
     exit 1
   end else begin
     try
       (* On compile le fichier. *)
-      let program,span = process_file (Sys.argv.(1)) in 
+      let program,_ = process_file (Sys.argv.(1)) in 
       Compil.start_program (program) ([],[]) "out.brain"
     with
     | Lexer.Error (e, span) ->
       eprintf "Lex error: %t: %t\n" (CodeMap.Span.print span) (Lexer.print_error e)
     | Parser.Error (e, span) ->
       eprintf "Parse error: %t: %t\n" (CodeMap.Span.print span) (Parser.print_error e)
+    | Failure(_) -> (* Dans le cas d'un crash *)
+      let _ = Sys.command "rm -f *.temp" in () (* On clean tous les fichiers .temp*)
+
   end
