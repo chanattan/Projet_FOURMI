@@ -41,9 +41,9 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                                                                 | Bool(False, sp) -> Unit, env
                                                                 | _ -> Span.print spe stderr; failwith "[Type Error] : the return value of the expression is not a boolean.\n")
   | DoWhile((prog, spp), (exp, spe)), _ -> let value, new_env = process_program prog env file in (match value with
-                                                                | Unit -> let bool_val = eval expr new_env file in (match bool_val with
-                                                                                        | Bool(True, sp) -> eval exp new_env file (*on réevalue l'expression dans le nouvel environnement new_env*)
-                                                                                        | Bool(False, sp) -> (), env (*value : vide unit??*)
+                                                                | Unit -> let bool_val,new_env2 = eval expr new_env file in (match bool_val with
+                                                                                        | Bool(True, sp) -> eval (exp,spe) new_env file (*on réevalue l'expression dans le nouvel environnement new_env*)
+                                                                                        | Bool(False, sp) -> Unit, env (*value : vide unit??*)
                                                                                         | _ -> Span.print spe stderr; failwith "[Type Error] : the return value of the expression is not a boolean.\n")
                                                                 | _ -> Span.print spp stderr; failwith "[Type Error] : Inside do while loop the expression is not type unit.\n")
   | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
@@ -151,8 +151,8 @@ and process_command (cmd : command) (file_out : out_channel) (env : environment)
                                 let (label_false, new_env2) = get_function_label func_name_true l_val_false new_env in
                                         fprintf file_out "Sense %t %t %t %t" sensd label_true label_false condition*)
 
-(** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié *)
-(** On va rajouter des labels pour s'occuper des sauts avant et après *)
+(** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié
+  On va rajouter des labels pour s'occuper des sauts avant et après *)
 and process_apply (name:string) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value * environment = 
   let arg_names,prog = get_func_from_name name (val_env,fun_env) in (* On récupère les informations de la fonction *)
   let (arg_values,(new_val_env,new_fun_env)) = eval_list args_expr  (val_env,fun_env) file in (* On évalue nos arguments *)
