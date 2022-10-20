@@ -150,7 +150,7 @@ and process_program (Program(program) : Ast.program) (env : environment) (file :
                         the return value of the expression is not a boolean.\n")
         | _, _ -> let value, new_env = eval expr_fst env file in (*exécution de la première expression si ce n'est pas de la forme if else*)
                 (match value with
-                | Unit -> (process_program (Program(q, sp)) new_env file)
+                | Unit -> (process_program (Program(expr_scd::q, sp)) new_env file)
                 | _ -> if q <> [] then failwith "[Type Error] :\
                         There is a non-last return value that is not type unit.\n"
                 else value, new_env))
