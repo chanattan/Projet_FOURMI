@@ -7,8 +7,8 @@ La grammaire est fournie dans le fichier lang.grammar.
 Le fichier en sortie est un .brain et contient le code de base compréhensible pour la fourmi
 
 ### Types de base :
-- <expression> : désigne une instruction du programme
-- <program> : ensemble de toutes les instructions qui composent le programme (liste non vide d'expression <expression>)
+- < expression > : désigne une instruction du programme
+- < program > : ensemble de toutes les instructions qui composent le programme (liste non vide d'expression <expression>)
 - <value>: <int> : entiers
             <bool> : booleens
                 true : vrai
@@ -187,9 +187,9 @@ On cherche une variable dans un environnement en partant du début de la liste. 
 
 ## III/ Tests unaires
 
-Dans les fichiers test_
+Dans le dossier test_brains, les fichiers test.ant peremettent de faire des tests unaires
 
-## III/ Idées d'amélioration
+## IV/ Idées d'amélioration
 
 Le compilateur ne possède pas beaucoup de macros. On pourrait rajouter des fonctions implémentées dans le compilateur permettant de faire des actions plus évoluées et qui seraient appelées par un simple <ident>
 
