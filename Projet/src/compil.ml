@@ -26,7 +26,7 @@ let process_sensedir (sensed : sensedir) : string = match sensed with
 
 (** Parcours l'environnement de fonction pour récupérer la liste des arguments et le corps associé *)
 let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program = match fun_env with
-  |[] -> failwith "Fonction non existante..."
+  |[] -> failwith (name^" : Fonction non existante...")
   |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
   |(_,arg_list, prog)::_ -> arg_list,prog
 
@@ -239,8 +239,8 @@ and eval_list (list: (expression Span.located) list) (env: environment) (file: o
   in (aux list, !new_env)
 
 (** On traite les mouvements élémentaires des fourmis.
-    ATTENTION : on ne va pas changer l'environnement pour les fonctions avec des callbacks ie Move, Pickup, Sense, Flip
-    On renvoit la valeur de retour potentiel des fonctions appelées ainsi que l'environnement potentiellement modifié par Mark par exemple*)
+    ATTENTION : on ne va pas changer l'environnement pour les fonctions avec des callbacks ie Move, Pickup, Sense, Flip (on renvoie alors Unit)
+    On renvoie la valeur de retour potentiel des fonctions appelées ainsi que l'environnement potentiellement modifié par Mark par exemple*)
 and process_command (cmd: command) (env: environment) (file: out_channel) : value * environment =
         match cmd with
 	| Move((name,_), (arg_list,_)) -> 

@@ -1,9 +1,13 @@
 fun main(){
 	let a = 1 ;
-	if(eq add 5 a, 6){
+	let b = 3 ;
+	let a = 2 ;
+	let c = 5 ;
+	
+	if(eq !a 2){
 		drop()
 	};
-	else{
+	if(le !b !c){
 		turn(L)
 	}
-};
+}

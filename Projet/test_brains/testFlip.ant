@@ -1,0 +1,11 @@
+fun lucky(){
+	turn(R)
+};
+
+fun sadge(){
+	turn(L)
+};
+
+fun main(){
+	flip(5, lucky, [], sadge, []) 
+}

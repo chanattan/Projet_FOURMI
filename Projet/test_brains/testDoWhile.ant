@@ -1,0 +1,6 @@
+fun main(){
+	let i = 0 ;
+	do{
+		turn(L)
+	}while(eq !i 1)
+}

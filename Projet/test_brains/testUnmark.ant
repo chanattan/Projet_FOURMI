@@ -1,0 +1,4 @@
+fun main(){
+	let a = 2;
+	unmark(!a)
+}

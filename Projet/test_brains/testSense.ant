@@ -1,0 +1,11 @@
+fun aheadIsHome(){
+	turn(R)
+};
+
+fun notHome(){
+	turn(L)
+};
+
+fun main(){
+	sense(AHEAD, IS_FRIEND, aheadIsHome, [], notHome, [])
+}

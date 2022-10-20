@@ -1,0 +1,17 @@
+fun main(){
+	if(eq (add 2 1) 3){
+		turn(L)
+	};
+	if(eq (sub 2 1) 1){
+		turn(R)
+	};
+	if(eq (mul 3 2) 6){
+		drop()
+	};
+	if(eq (div 5 2) 2){
+		turn(L)
+	};
+	if(eq (mod 5 2) 1){
+		turn(R)
+	}
+}
