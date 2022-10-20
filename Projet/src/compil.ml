@@ -7,47 +7,75 @@ type function_env = (string * (string list) * program) list (* nom de la fct, le
 type environment = value_env * function_env
 
 
-let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
+let bind_value (str:string) (v:value) (env:environment) : environment =
+        let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
-let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program = match fun_env with
-  |[] -> failwith "Fonction non existante..."
-  |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
-  |(_,arg_list, prog)::_ -> arg_list,prog
+let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program =
+        match fun_env with
+        |[] -> failwith "Fonction non existante..."
+        |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
+        |(_,arg_list, prog)::_ -> arg_list,prog
 
-let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment = match arg_names,arg_values with
-  |[],[] ->  (val_env,fun_env)
-  |[],_ | _, [] -> failwith "Eh ? Pas le même nombre"
-  |name::qname, value::qvalue -> let new_val_env,new_fun_env = update_env_for_fun qname qvalue (val_env,fun_env) in ((name,value)::new_val_env, new_fun_env)
+let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment =
+        match arg_names,arg_values with
+        |[],[] ->  (val_env,fun_env)
+        |[],_ | _, [] -> failwith "Eh ? Pas le même nombre"
+        |name::qname, value::qvalue ->
+                let new_val_env,new_fun_env = update_env_for_fun qname qvalue (val_env,fun_env) in
+                ((name,value)::new_val_env, new_fun_env)
 
 
 
 let rec eval (expr : expression Span.located) (env : environment) (file : out_channel) : value * environment = match expr with
   | Const(v, _), _ ->  v, env
-  | Var((str, _), exprsp), _ -> let (v, new_env) = eval exprsp env file in (Unit, bind_value str v new_env)
-  | Compare(comp, sp), _ -> let bool_val = (process_compare comp file) in (match bool_val with
-                                                                | true -> Bool(True, sp), env
-                                                                | false -> Bool(False, sp), env)
+  | Var((str, _), exprsp), _ ->
+        let (v, new_env) = eval exprsp env file in
+        (Unit, bind_value str v new_env)
+  | Compare(comp, sp), _ ->
+        let bool_val = (process_compare comp file) in
+                (match bool_val with
+                | true -> Bool(True, sp), env
+                | false -> Bool(False, sp), env)
   | Operation(op, _), _ -> (process_operation op env file), env
-  | Command(cmd, _), _ -> let new_env = (process_command cmd file env) in Unit, new_env
-  | If((cond, spc), (prog, spp)), _ -> let bool_val, new_env = eval expr env file in (match bool_val with
-                                                                | Bool(True, sp) -> process_program prog new_env file
-                                                                | Bool(False, sp) -> Unit, env
-                                                                | _ -> Span.print spc stderr; failwith "[Type Error] : the return value of the expression is not a boolean.\n")
-  | Else(prog, sp), _ -> process_program prog env file
-  | While((exp, spe), (prog, spp)), _ -> let bool_val, new_env = eval expr env file in (match bool_val with
-                                                                | Bool(True, sp) -> let value, new_env2 = process_program prog new_env file in (match value with
-                                                                                                                                | Unit -> eval (exp, spe) new_env2 file (*on réevalue l'expression dans le nouvel environnement*)
-                                                                                                                                | _ -> Span.print spp stderr; failwith "[Type Error] : Inside while loop expression is not type unit.\n")
-                                                                | Bool(False, sp) -> Unit, env
-                                                                | _ -> Span.print spe stderr; failwith "[Type Error] : the return value of the expression is not a boolean.\n")
-  | DoWhile((prog, spp), (exp, spe)), _ -> let value, new_env = process_program prog env file in (match value with
-                                                                | Unit -> let bool_val,new_env2 = eval expr new_env file in (match bool_val with
-                                                                                        | Bool(True, sp) -> eval (exp,spe) new_env file (*on réevalue l'expression dans le nouvel environnement new_env*)
-                                                                                        | Bool(False, sp) -> Unit, env (*value : vide unit??*)
-                                                                                        | _ -> Span.print spe stderr; failwith "[Type Error] : the return value of the expression is not a boolean.\n")
-                                                                | _ -> Span.print spp stderr; failwith "[Type Error] : Inside do while loop the expression is not type unit.\n")
+  | Command(cmd, _), _ ->
+        let new_env = (process_command cmd file env) in Unit, new_env
+  | If((cond, spc), (prog, _)), _ ->
+        let bool_val, new_env = eval (cond, spc) env file in
+                (match bool_val with
+                | Bool(True, _) -> process_program prog new_env file
+                | Bool(False, sp) -> Bool(False, sp), env
+                | _ -> Span.print spc stderr; failwith "[Type Error] :\
+                         the return value of the expression is not a boolean.\n")
+  | Else(prog, _), _ -> process_program prog env file
+  | While((exp, spe), (prog, spp)), _ ->
+        let bool_val, new_env = eval (exp, spe) env file in
+                (match bool_val with
+                | Bool(True, _) -> (match exp with
+                | Const(Bool(True, spb), _) -> 
+                        Span.print spb stderr; failwith "[Type Error] :\
+                                 infinite while loop.\n" (*cas while(true)*)
+                | _ -> let value, new_env2 = process_program prog new_env file in (match value with
+                | Unit -> eval expr new_env2 file (*on réevalue toute l'expression dans le nouvel environnement*)
+                | _ -> Span.print spp stderr; failwith "[Type Error] :\
+                         Inside while loop expression is not type unit.\n")) 
+                | Bool(False, _) -> Unit, env
+                | _ -> Span.print spe stderr; failwith "[Type Error] :\
+                         the return value of the expression is not a boolean.\n")
+  | DoWhile((prog, spp), (exp, spe)), _ ->
+        let value, new_env = process_program prog env file in
+                (match value with
+                | Unit -> let bool_val, new_env2 = eval (exp, spe) new_env file in (match bool_val with
+                | Bool(True, sp) -> (match exp with
+                 | Const(Bool(True, spb), _) -> Span.print spp stderr; failwith "[Type Error] :\
+                         infinite dowhile loop.\n"
+                | _ -> eval expr new_env2 file) (*on réevalue toute l'expression dans le nouvel environnement new_env2*)
+                | Bool(False, sp) -> Unit, env
+                | _ -> Span.print spe stderr; failwith "[Type Error] :\
+                        the return value of the expression is not a boolean.\n")
+                | _ -> Span.print spp stderr; failwith "[Type Error] :\
+                        Inside do while loop the expression is not type unit.\n")
   | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
-  (*| Func((ident, sp), (args, list), (prog, spp)) -> *)
+  (*Func est déjà traité dans la fonction start_program*)
   | _ -> failwith "WIP"
 
 and process_condition (condi : cond) (env : environment) (file_out : out_channel) : unit = match condi with
@@ -57,41 +85,63 @@ and process_condition (condi : cond) (env : environment) (file_out : out_channel
   | FoeWithFood -> fprintf file_out "FoeWithFood"
   | Food -> fprintf file_out "Food"
   | Rock -> fprintf file_out "Rock"
-  | Marker(expr)  -> let value, env = (eval expr env file_out) in (match value with
-                                                        | Int(k, _) -> fprintf file_out "Marker %d" k
-                                                        | _ -> failwith "[Type Error] : the marker's expression return value type is not integer.\n")
+  | Marker(expr) ->
+        let value, env = (eval expr env file_out) in
+                (match value with
+                | Int(k, _) -> fprintf file_out "Marker %d" k
+                | _ -> failwith "[Type Error] :\
+                         the marker's expression return value type is not integer.\n")
   | FoeMarker -> fprintf file_out "FoeMarker"
   | Home -> fprintf file_out "Home"
   | FoeHome -> fprintf file_out "FoeHome"
 
 and process_operation (op : operation) (env : environment) (file : out_channel) : value = match op with
-| Add((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
-                                let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                                                                | Int(i, spp), Int(y, _) -> Int(i + y, spp)
-                                                                                | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to sum up two values.\n")
-| Sub((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
-                                let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i - y, spp)
-                                | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to substract two values.\n")
-| Mul((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
-                                let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i * y, spp)
-                                | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to multiply two values.\n")
-| Div((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
-                                let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i / y, spp)
-                                | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to divide two values.\n")
-| Mod((v1, sp), (v2, sp2)) -> let value, new_env = (eval (v1, sp) env file) in
-                                let value2, new_env2 = (eval (v2, sp2) new_env file) in (match value, value2 with
-                                | Int(i, spp), Int(y, _) -> Int(i mod y, spp)
-                                | _, _ -> Span.print sp stderr; failwith "[Type Error] : there was an error while trying to use modulo.\n")
+| Add((v1, sp), (v2, sp2)) ->
+        let value, new_env = (eval (v1, sp) env file) in
+        let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                (match value, value2 with
+                | Int(i, spp), Int(y, _) -> Int(i + y, spp)
+                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                         there was an error while trying to sum up two values.\n")
+| Sub((v1, sp), (v2, sp2)) ->
+        let value, new_env = (eval (v1, sp) env file) in
+        let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                (match value, value2 with
+                | Int(i, spp), Int(y, _) -> Int(i - y, spp)
+                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                         there was an error while trying to substract two values.\n")
+| Mul((v1, sp), (v2, sp2)) ->
+        let value, new_env = (eval (v1, sp) env file) in
+        let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                (match value, value2 with
+                | Int(i, spp), Int(y, _) -> Int(i * y, spp)
+                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                         there was an error while trying to multiply two values.\n")
+| Div((v1, sp), (v2, sp2)) ->
+        let value, new_env = (eval (v1, sp) env file) in
+        let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                (match value, value2 with
+                | Int(i, spp), Int(y, _) -> Int(i / y, spp)
+                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                         there was an error while trying to divide two values.\n")
+| Mod((v1, sp), (v2, sp2)) ->
+        let value, new_env = (eval (v1, sp) env file) in
+        let value2, new_env2 = (eval (v2, sp2) new_env file) in
+        (match value, value2 with
+                | Int(i, spp), Int(y, _) -> Int(i mod y, spp)
+                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                         there was an error while trying to use modulo.\n")
 
-and process_program (Program(program) : Ast.program) (env : environment) (file : out_channel) : value * environment = match program with
-|[],_ -> Unit, env
-|expr::q, sp -> let value, new_env = eval expr env file in match value with
-                                              | Unit -> (process_program (Program(q, sp)) new_env file)
-                                              | _ -> if q <> [] then failwith "[Type Error] : There is a non-last return value that is not type unit.\n"
-                                                      else value, new_env (*On utilise un comportement similaire à Caml qui retourne la dernière valeur qui n'est pas de type unit.*)
+and process_program (Program(program) : Ast.program) (env : environment) (file : out_channel) : value * environment =
+        match program with
+        |[],_ -> Unit, env
+        |expr::q, sp ->
+                let value, new_env = eval expr env file in
+                match value with
+                | Unit -> (process_program (Program(q, sp)) new_env file)
+                | _ -> if q <> [] then failwith "[Type Error] :\
+                         There is a non-last return value that is not type unit.\n"
+                        else value, new_env (*On utilise un comportement similaire à Caml qui retourne la dernière valeur qui n'est pas de type unit.*)
 and process_compare (comp : compare) (file_out : out_channel) : bool = match comp with
 | Eq(expr_left, expr_right) ->  let v1 = eval (expr_left) in
                                 let v2 = eval (expr_right) in
@@ -114,12 +164,13 @@ and process_compare (comp : compare) (file_out : out_channel) : bool = match com
                                 if v1>v2 then true
                                 else false
 
-and eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) = 
-  let newEnv = ref env in
+and eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) : value list * environment = 
+  let new_env = ref env in
   let rec aux l = match l with
-    | [] -> []
-    | expr::q -> let v,tempEnv = eval expr (!newEnv) file in newEnv := tempEnv ; v::(aux q)
-  in (aux list,!newEnv)
+        | [] -> []
+        | exp::q -> let v, temp_env = eval exp (!new_env) file in
+                        new_env := temp_env; v::(aux q)
+  in (aux list, !new_env)
 
 (* process_command va traiter les commandes primitives concernant une fourmi*)
 and process_command (cmd : command) (file_out : out_channel) (env : environment) : environment = match cmd with
@@ -171,5 +222,15 @@ and process_apply (name:string) (args_expr:expression Span.located list) (val_en
   v, post_env
 
 
-let start_program (prog : program) (env: environment) (file_out : out_channel) : unit =
-        let q = "ratio" in q;
+let start_program (prog : program) (env: environment) (file_out : out_channel) : unit = let main_prog = ref prog in (*variable qui va se souvenir du programme de main*)
+let rec aux (prog_bis : program) (env_bis : environment) : unit =
+        match prog_bis with
+        | [], _ -> env_bis
+        | p::next_prog, sp ->
+                (match q with
+                | Func((str, sp), (args, spa), (progg, spp)) when str = "main" ->
+                        main_prog := progg; aux Prog(next_prog, sp) env_bis (*on sauvegarde le programme de la fonction main*)
+                | Func((str, sp), (args, spa), (progg, spp)) ->
+                        let val_env, func_env = env_bis in (*on stocke toutes les déclarations de fonctions dans l'environnement*)
+                        aux Prog(next_prog, sp) (val_env, (str, args, progg)::func_env))
+in let new_env = aux prog env in process_program !main_prog new_env file_out (*évaluation de la fonction main*)
