@@ -1,15 +1,15 @@
 fun main(){
-if(true){
-    drop();
-};
-else{
-    let ff = 14;
-};
+    if(true){
+        turn(L);
+    };
+    else{
+        turn(R);
+    };
 
-if(false){
-    drop;
-};
-else{
-    let ff = 14;
-};
-};
+    if(false){
+        turn(R);
+    };
+    else{
+        turn(L);
+    };
+}

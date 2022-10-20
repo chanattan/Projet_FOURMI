@@ -300,4 +300,5 @@ let start_program (prog : program) (env: environment) (file_out : string) : unit
   let file = open_out "main.temp" in  (* Notre premier fichier d'écriture, a priori ce sera le main *)
   let _,_ = process_program (!main_prog) new_env file in (* évaluation de la fonction main*)
   let _ = Sys.command ("for f in *.temp; do cat $f >> "^file_out^"; done") in (* On concatène les fichiers .temp dans file_out*)
+  let _ = Sys.command "rm -f *.temp" in
   close_out file (* On ferme le fichier qu'on avait ouvert *)
