@@ -18,7 +18,7 @@ let process_file filename =
   (* Parse le fichier. *)
   let (program, span) = Parser.parse_program lexer in
   printf "successfully parsed the following program at position %t:\n%t\n" (CodeMap.Span.print span) (Ast.print_program program) ;
-  let fOut = open_out "out.brain" in Compil.start_program (program) ([],[]) fOut; close_out fOut
+  program, span
 
 (* Le point de départ du compilateur. *)
 let _ =
@@ -30,7 +30,8 @@ let _ =
   end else begin
     try
       (* On compile le fichier. *)
-      process_file (Sys.argv.(1))
+      let program,span = process_file (Sys.argv.(1)) in 
+      Compil.start_program (program) ([],[]) "out.brain"
     with
     | Lexer.Error (e, span) ->
       eprintf "Lex error: %t: %t\n" (CodeMap.Span.print span) (Lexer.print_error e)

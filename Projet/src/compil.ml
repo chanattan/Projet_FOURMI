@@ -274,19 +274,23 @@ and create_fun_label (name : string) (prog:program) ((apply_val_env,apply_fun_en
   current_label,goto_label,v,post_env
 
 
-let start_program (prog : program) (env: environment) (file_out : out_channel) : unit = let main_prog = ref prog in (*variable qui va se souvenir du programme de main*)
-        let rec aux (Program(prog_bis) : program) (env_bis : environment) : environment =
-                match prog_bis with
-                | [], _ -> env_bis
-                | p::next_prog, sp ->
-                        (match p with
-                        | Func((str, _), (args, _), (progg, _)),_ when str = "main" ->
-                                main_prog := progg; 
-                                let val_env, func_env = env_bis in (*on stocke toutes les déclarations de fonctions dans l'environnement*)
-                                aux (Program(next_prog, sp)) (val_env, (str, List.map (fun (str,_) -> str) args, progg)::func_env)
-                        | Func((str, _), (args, _), (progg, _)),_ ->
-                                let val_env, func_env = env_bis in (*on stocke toutes les déclarations de fonctions dans l'environnement*)
-                                aux (Program(next_prog, sp)) (val_env, (str, List.map (fun (str,_) -> str) args, progg)::func_env)
-                        | _ -> aux (Program(next_prog,sp)) env_bis)
-                in let new_env = aux prog env in
-                let _,_ = process_program (!main_prog) new_env file_out in () (*évaluation de la fonction main*)
+let start_program (prog : program) (env: environment) (file_out : string) : unit = 
+  let main_prog = ref prog in (*variable qui va se souvenir du programme de main*)
+  let rec aux (Program(prog_bis) : program) (env_bis : environment) : environment =
+    match prog_bis with
+    | [], _ -> env_bis
+    | p::next_prog, sp ->
+      (match p with
+      | Func((str, _), (args, _), (progg, _)),_ when str = "main" ->
+        main_prog := progg; 
+        let val_env, func_env = env_bis in (*on stocke toutes les déclarations de fonctions dans l'environnement*)
+        aux (Program(next_prog, sp)) (val_env, (str, List.map (fun (str,_) -> str) args, progg)::func_env)
+        | Func((str, _), (args, _), (progg, _)),_ ->
+          let val_env, func_env = env_bis in (*on stocke toutes les déclarations de fonctions dans l'environnement*)
+          aux (Program(next_prog, sp)) (val_env, (str, List.map (fun (str,_) -> str) args, progg)::func_env)
+          | _ -> aux (Program(next_prog,sp)) env_bis)
+  in let new_env = aux prog env in 
+  let file = open_out "main.temp" in  (* Notre premier fichier d'écriture, a priori ce sera le main *)
+  let _,_ = process_program (!main_prog) new_env file in (* évaluation de la fonction main*)
+  let _ = Sys.command ("for f in *.temp; do cat $f >> "^file_out^"; done") in (* On concatène les fichiers .temp dans file_out*)
+  close_out file (* On ferme le fichier qu'on avait ouvert *)

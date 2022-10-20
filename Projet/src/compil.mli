@@ -7,7 +7,7 @@ type function_env = (string * (string list) * program) list (* Nom de la fonctio
 type environment = value_env * function_env (* Un environnement produit pour transmettre toutes les informations nécessaire *)
 
 val process_program : program -> environment -> out_channel -> value * environment
-val start_program : program -> environment -> out_channel -> unit
+val start_program : program -> environment -> string -> unit
 val eval : expression Span.located -> environment -> out_channel -> value * environment
 val eval_list : expression Span.located list-> environment -> out_channel -> value list * environment
 
