@@ -86,6 +86,7 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                         Inside do while loop the expression is not type unit.\n")
         | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
         (*Func est déjà traité dans la fonction start_program*)
+        | Parenthesis(e),_ -> eval e env file
         | _ -> let exp, _ = expr in print_expression exp stderr; failwith "WIP"
 
 and process_condition (condi : cond) (env : environment) (file_out : out_channel) : string * environment = match condi with

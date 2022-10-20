@@ -33,6 +33,7 @@ type expression =
 	| Command		<command>
 	| Apply 		<ident>(<expression*,>)
     | Func          fun <ident>(<ident*,>) {<program>}
+	| Parenthesis	(<expression>)
 
 type operation =
 	| Add			add <expression> <expression>
