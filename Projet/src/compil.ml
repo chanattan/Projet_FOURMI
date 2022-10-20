@@ -48,7 +48,7 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                 let bool_val, new_env = eval (cond, spc) env file in
                         (match bool_val with
                         | Bool(True, _) -> process_program prog new_env file
-                        | Bool(False, sp) -> Bool(False, sp), new_env
+                        | Bool(False, sp) -> Unit, new_env (*si la condition cond est fausse on ne fait rien*)
                         | _ -> Span.print spc stderr; failwith "[Type Error] :\
                                  the return value of the expression is not a boolean.\n")
         (*Else est géré dans process_program pour prévoir l'expression précédente si c'est un if ou non*)
@@ -168,27 +168,57 @@ and process_program (Program(program) : Ast.program) (env : environment) (file :
                  There is a non-last return value that is not type unit.\n"
               else value, new_env (*On utilise un comportement similaire à Caml qui retourne la dernière valeur qui n'est pas de type unit.*)
 
-and process_compare (comp : compare) (env:environment) (file : out_channel) : bool*environment = match comp with
-| Eq(expr_left, expr_right) ->
-        let v1,new_env = eval (expr_left) env file in (*check type != unit*)
-        let v2,new_env2 = eval (expr_right) new_env file in
-        v1 = v2, new_env2
-| Inf(expr_left, expr_right) ->
-        let v1,new_env = eval (expr_left) env file in
-        let v2,new_env2 = eval (expr_right) new_env file in
-        v1 <= v2, new_env2
-| Sup(expr_left, expr_right) ->
-        let v1,new_env = eval (expr_left) env file in
-        let v2,new_env2 = eval (expr_right) new_env file in
-        v1 >= v2, new_env2
-| StInf(expr_left, expr_right) ->
-        let v1,new_env = eval (expr_left) env file in
-        let v2,new_env2 = eval (expr_right) new_env file in
-        v1 > v2, new_env2
-| StSup(expr_left, expr_right) ->
-        let v1,new_env = eval (expr_left) env file in
-        let v2,new_env2 = eval (expr_right) new_env file in
-        v1 > v2, new_env2
+and process_compare (comp : compare) (env:environment) (file : out_channel) : bool * environment =
+        match comp with
+        | Eq(expr_left, expr_right) ->
+                let v1, new_env = eval (expr_left) env file in (*check type != unit*)
+                let v2, new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, Unit -> true, new_env2
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b1, sp1), Bool(b2, sp2) -> (b1 = b2), new_env2
+                | Bool(b, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(b, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, sp1), Int(v2, sp2) -> (v1 = v2), new_env2
+                | Int(v, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare int with another type.\n"
+                | _, Int(v, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare int with another type.\n")
+        | Inf(expr_left, expr_right) ->
+                let v1,new_env = eval (expr_left) env file in
+                let v2,new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(b, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, sp1), Int(v2, sp2) -> (v1 <= v2), new_env2)
+        | Sup(expr_left, expr_right) ->
+                let v1,new_env = eval (expr_left) env file in
+                let v2,new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(b, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, sp1), Int(v2, sp2) -> (v1 >= v2), new_env2)
+        | StInf(expr_left, expr_right) ->
+                let v1,new_env = eval (expr_left) env file in
+                let v2,new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(b, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, sp1), Int(v2, sp2) -> (v1 < v2), new_env2)
+        | StSup(expr_left, expr_right) ->
+                let v1,new_env = eval (expr_left) env file in
+                let v2,new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(b, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, sp1), Int(v2, sp2) -> (v1 > v2), new_env2)
 
 and eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) : value list * environment = 
   let new_env = ref env in

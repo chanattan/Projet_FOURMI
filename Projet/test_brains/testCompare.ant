@@ -1,5 +1,5 @@
 fun main(){
-	if(eq 5, 5){
+	if(eq 5, 6){
 		drop()
 	};
 	if(le 5, 6){
