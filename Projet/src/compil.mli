@@ -2,9 +2,9 @@ open CodeMap
 open Ast
 
 (** commentaire fonction *)
-type value_env = (string * value) list
-type function_env = (string * (string list) * program) list (* nom de la fct, les arguments en nom pour remplacer, le label *)
-type environment = value_env * function_env
+type value_env = (string * value) list (* Environnement de variables avec le nom de la variable * sa valeur. La première occurence du nom dans la liste est renvoyé donc on peut contenir des doublons*)
+type function_env = (string * (string list) * program) list (* Nom de la fonction, le nom des arguments en tant que variables, le programme à exécuter (le corps de la fonction) *)
+type environment = value_env * function_env (* Un environnement produit pour transmettre toutes les informations nécessaire *)
 
 val process_program : program -> environment -> out_channel -> value * environment
 val start_program : program -> environment -> out_channel -> unit
@@ -13,6 +13,6 @@ val eval_list : expression Span.located list-> environment -> out_channel -> val
 
 val process_command : command -> out_channel -> environment -> environment
 val process_compare : compare -> out_channel -> bool
-(*val process_apply : string -> (expression Span.located list) -> environment -> out_channel -> value*)
+val process_apply : string -> (expression Span.located list) -> environment -> out_channel -> value * environment
 val process_condition : cond -> environment -> out_channel -> unit
 val process_operation : operation -> environment -> out_channel -> value
