@@ -2,22 +2,12 @@ fun main(){
 6437;
 true;
 
-let test_int = 6437;
-let test_bool = true;
-let test_add = add 5 3;
-let test_sub = sub 5 3;
-let test_mul = mul 5 3;
-let test_div = div 5 3;
-let test_mod = mod 5 3;
+let testint = 6437;
+let testbool = true;
+let testadd = add 5 3;
+let testsub = sub 5 3;
+let testmul = mul 5 3;
+let testdiv = div 5 3;
+let testmod = mod 5 3
 
-IS_FRIEND;
-IS_FOE;
-IS_FRIEND_WITH_FOOD;
-IS_FOE_WITH_FOOD;
-IS_FOOD;
-IS_ROCK;
-IS_MARKER 6437;
-IS_FOE_MARKER;
-IS_HOME;
-IS_FOE_HOME;
-};
+}

@@ -37,6 +37,10 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
         | Const(v, _), _ ->  v, env
         | Var((str, _), exprsp), _ ->
                 let (v, new_env) = eval exprsp env file in (Unit, bind_value str v new_env)
+        | Deref(str, sp), _ -> let value_env, func_env = env in
+                (match value_env with
+                | [] -> Span.print sp stderr; failwith "[Error] Trying to dereference a variable that is not initialized.\n"
+                | (ident, value)::l -> if ident = str then value, env else eval expr (l, func_env) file)
         | Compare(comp, sp), _ ->
                 let bool_val,new_env = (process_compare comp env file) in
                         (match bool_val with

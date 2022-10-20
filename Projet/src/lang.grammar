@@ -2,11 +2,11 @@ type program =
 	| Program 	<expression+;>
 
 type compare =
-    | Eq            eq <expression>, <expression>
-	| Inf           le <expression>, <expression>
-    | Sup           ge <expression>, <expression>
-	| StInf			lt <expression>, <expression>
-	| StSup			gt <expression>, <expression>
+    | Eq            eq <expression> <expression>
+	| Inf           le <expression> <expression>
+    | Sup           ge <expression> <expression>
+	| StInf			lt <expression> <expression>
+	| StSup			gt <expression> <expression>
 
 
 type command = 
@@ -23,6 +23,7 @@ type command =
 type expression =
     | Const         <value>
     | Var           let <ident> = <expression>
+	| Deref			!<ident>	
     | If        	if (<expression>) {<program>}
 	| Else 			else {<program>} 
     | While         while (<expression>) {<program>}
