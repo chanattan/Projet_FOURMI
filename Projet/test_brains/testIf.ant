@@ -1,15 +1,15 @@
 fun main(){
-    if(true){
-        turn(L);
+    if (true) {
+        turn(L)
     };
     else{
-        turn(R);
+        turn(R)
     };
 
     if(false){
-        turn(R);
+        turn(R)
     };
     else{
-        turn(L);
-    };
+        turn(L)
+    }
 }
