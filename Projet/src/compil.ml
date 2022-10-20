@@ -46,24 +46,31 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
         | Command(cmd, _), _ -> let value,new_env = (process_command cmd env file) in value, new_env
         (*If et Else sont gérés dans process_program pour prévoir 2 expressions*)
         | While((exp, spe), (prog, spp)), _ ->
-                let bool_val, new_env = eval expr env file in
-                        (match bool_val with
-                        Bool(True, _) -> let value, new_env2 = process_program prog new_env file in (match value with
-                        | Unit -> eval (exp, spe) new_env2 file (*on réevalue l'expression dans le nouvel environnement*)
-                        | _ -> Span.print spp stderr; failwith "[Type Error] :\
-                        Inside while loop expression is not type unit.\n")
-                        | Bool(False, _) -> Unit, env
-                        | _ -> Span.print spe stderr; failwith "[Type Error] :\
-                        the return value of the expression is not a boolean.\n")
+                let bool_val, new_env = eval (exp, spe) env file in
+                (match bool_val with
+                | Bool(True, _) -> (match exp with
+                | Const(Bool(True, spb), _) -> 
+                        Span.print spb stderr; failwith "[Type Error] :\
+                                 infinite while loop.\n" (*cas while(true)*)
+                | _ -> let value, new_env2 = process_program prog new_env file in (match value with
+                | Unit -> eval expr new_env2 file (*on réevalue toute l'expression dans le nouvel environnement*)
+                | _ -> Span.print spp stderr; failwith "[Type Error] :\
+                         Inside while loop expression is not type unit.\n")) 
+                | Bool(False, _) -> Unit, env
+                | _ -> Span.print spe stderr; failwith "[Type Error] :\
+                         the return value of the expression is not a boolean.\n")
         | DoWhile((prog, spp), (exp, spe)), _ ->
                 let value, new_env = process_program prog env file in
-                        (match value with
-                        | Unit -> let bool_val,new_env2 = eval expr new_env file in (match bool_val with
-                        | Bool(True, _) -> eval (exp,spe) new_env2 file (*on réevalue l'expression dans le nouvel environnement new_env*)
-                        | Bool(False, _) -> Unit, env (*value : vide unit??*)
-                        | _ -> Span.print spe stderr; failwith "[Type Error] :\
+                (match value with
+                | Unit -> let bool_val, new_env2 = eval (exp, spe) new_env file in (match bool_val with
+                | Bool(True, sp) -> (match exp with
+                 | Const(Bool(True, spb), _) -> Span.print spp stderr; failwith "[Type Error] :\
+                         infinite dowhile loop.\n"
+                | _ -> eval expr new_env2 file) (*on réevalue toute l'expression dans le nouvel environnement new_env2*)
+                | Bool(False, sp) -> Unit, env
+                | _ -> Span.print spe stderr; failwith "[Type Error] :\
                         the return value of the expression is not a boolean.\n")
-                        | _ -> Span.print spp stderr; failwith "[Type Error] :\
+                | _ -> Span.print spp stderr; failwith "[Type Error] :\
                         Inside do while loop the expression is not type unit.\n")
         | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
         (*Func est déjà traité dans la fonction start_program*)
