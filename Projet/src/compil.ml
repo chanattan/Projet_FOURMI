@@ -9,6 +9,17 @@ type environment = value_env * function_env
 
 let bind_value (str:string) (v:value) (env:environment) : environment = let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
+let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program = match fun_env with
+  |[] -> failwith "Fonction non existante..."
+  |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
+  |(_,arg_list, prog)::_ -> arg_list,prog
+
+let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment = match arg_names,arg_values with
+  |[],[] ->  (val_env,fun_env)
+  |[],_ | _, [] -> failwith "Eh ? Pas le même nombre"
+  |name::qname, value::qvalue -> let new_val_env,new_fun_env = update_env_for_fun qname qvalue (val_env,fun_env) in ((name,value)::new_val_env, new_fun_env)
+
+
 
 let rec eval (expr : expression Span.located) (env : environment) (file : out_channel) : value * environment = match expr with
   | Const(v, _), _ ->  v, env
@@ -35,7 +46,7 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                                                                                         | Bool(False, sp) -> (), env (*value : vide unit??*)
                                                                                         | _ -> Span.print spe stderr; failwith "[Type Error] : the return value of the expression is not a boolean.\n")
                                                                 | _ -> Span.print spp stderr; failwith "[Type Error] : Inside do while loop the expression is not type unit.\n")
-  (*| Apply*)
+  | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
   (*| Func((ident, sp), (args, list), (prog, spp)) -> *)
   | _ -> failwith "WIP"
 
@@ -140,22 +151,9 @@ and process_command (cmd : command) (file_out : out_channel) (env : environment)
                                 let (label_false, new_env2) = get_function_label func_name_true l_val_false new_env in
                                         fprintf file_out "Sense %t %t %t %t" sensd label_true label_false condition*)
 
-let start_program (prog : program) (env: environment) (file_out : out_channel) : unit =
-        let q = "ratio" in q;
-
-let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program = match fun_env with
-  |[] -> failwith "Fonction non existante..."
-  |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
-  |(_,arg_list, prog)::_ -> arg_list,prog
-
-let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment = match arg_names,arg_values with
-  |[],[] ->  (val_env,fun_env)
-  |[],_ | _, [] -> failwith "Eh ? Pas le même nombre"
-  |name::qname, value::qvalue -> let new_val_env,new_fun_env = update_env_for_fun qname qvalue (val_env,fun_env) in ((name,value)::new_val_env, new_fun_env)
-
 (** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié *)
 (** On va rajouter des labels pour s'occuper des sauts avant et après *)
-let process_apply (name:string) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value = 
+and process_apply (name:string) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value = 
   let arg_names,prog = get_func_from_name name (val_env,fun_env) in (* On récupère les informations de la fonction *)
   let (arg_values,(new_val_env,new_fun_env)) = eval_list args_expr  (val_env,fun_env) file in (* On évalue nos arguments *)
   let apply_val_env,apply_fun_env = update_env_for_fun arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour juste pour la fonction*)
@@ -171,3 +169,7 @@ let process_apply (name:string) (args_expr:expression Span.located list) (val_en
   let v,post_env = process_program prog (apply_val_env,apply_fun_env) new_file in (* On process ce qui signifie qu'on écrit le programme dans le fichier *)
   fprintf new_file "Goto %s\n\t" (current_label) ; (* On écrit le goto de retour (comme le return) à la fin du nouveau fichier *)
   v
+
+
+let start_program (prog : program) (env: environment) (file_out : out_channel) : unit =
+        let q = "ratio" in q;
