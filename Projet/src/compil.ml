@@ -296,7 +296,7 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
                 fprintf file "%s: \n" current_label_true ;
                 Unit,new_env
-        | Flip((expr_i,sp), (name_true,_), (arg_list_true,_),(name_false,_),(arg_list_false,_)) ->
+        | Flip((expr_i,sp), (name_true,_), (name_false,_), (arg_list_true,_), (arg_list_false,_)) ->
                         (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
                         let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
                         let value, new_env = eval (expr_i,sp) env file in 
