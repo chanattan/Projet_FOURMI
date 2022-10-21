@@ -1,13 +1,13 @@
 # Documentation Projet compilateur fourmi
 
-## I/ Overview
-Ce compilateur permet de transformer un langage de haut niveau en "langage fourmi", un langage réduit à de simples instructions compréhensibles par une fourmi.
+## I/ Présentation
+Ce compilateur permet de transformer un langage de haut niveau en "langage fourmi", un langage réduit à de simples instructions compréhensibles par une fourmi.\
 La fourmi ne peut que se déplacer, regarder son environnenemt et poser ou enlever des phéromones.
-La grammaire est fournie dans le fichier lang.grammar.
-Le fichier en sortie est un .brain et contient le code de base compréhensible par la fourmi
+La grammaire est fournie dans le fichier lang.grammar.\
+Le fichier en sortie est un .brain et contient le code de base compréhensible par la fourmi.\
 
 ### Types de base :
-- < expression > : désigne un couple composé d'une instruction du programme et d'un span (pour localiser les erreurs)
+- <expression> : instructions de déclaration de variable et fonction, deréférencement de variable, application de fonction et expressions à évaluer (comparaisons, commandes primaires de fourmi) ainsi que de structures de contrôle.
 - < program > : ensemble de toutes les instructions qui composent le programme (liste non vide d'expression < expression >)
 - < value >: < int > : entiers
             < bool > : booleens
