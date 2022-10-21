@@ -296,7 +296,6 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
                 fprintf file "%s: \n" current_label_true ;
                 Unit,new_env
-<<<<<<< HEAD
         | Flip((expr_i,sp), (name_true,_), (arg_list_true,_),(name_false,_),(arg_list_false,_)) ->
                         (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
                         let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
@@ -322,33 +321,6 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                         Unit,new_env
                         |_ -> Span.print sp stderr ; 
                         failwith "[Type Error] : wait argument wasn't an int")
-=======
-  | Flip((expr_i,sp), (name_true,_),(name_false,_),(arg_list_true,_),(arg_list_false,_)) ->
-                (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
-                let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
-                let value, new_env = eval (expr_i,sp) env file in 
-                let val_i = (match value with
-                        |Int(i,_) -> i
-                        |_ -> Span.print sp stderr ; failwith "[Type Error] : Flip argument wasn't an int") in
-                fprintf file "\tFlip %i %s %s\n" val_i goto_label_true goto_label_false;
-                fprintf file "\tGoto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
-                fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
-                fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
-                fprintf file "%s: \n" current_label_true ;
-                Unit,new_env)
-  | Drop -> fprintf file "\tDrop\n" ; Unit,env
-  | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
-                |Int(i,_) -> 
-                  for _ = 0 to i - 1 do 
-                    let label = ("wait_"^(Int.to_string (!fun_counter))) in
-                    fprintf file "\tGoto %s\n" label ;
-                    fprintf file "%s:\n" label;
-                  incr fun_counter
-                  done;
-                    Unit,new_env
-                |_ -> Span.print sp stderr ; 
-                failwith "[Type Error] : wait argument wasn't an int")
->>>>>>> 336fd729e58c5f94b5cc96f7c3a3d072d8d5a627
 
 (** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié
   On va rajouter des labels pour s'occuper des sauts avant et après *)
