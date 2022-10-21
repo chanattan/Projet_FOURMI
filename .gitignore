@@ -18,3 +18,5 @@ Projet/src/lexer.ml
 Projet/src/lexer.mli
 Projet/parser_generator/simple-parser-gen
 .vscode
+Projet/**/*.temp
+Projet/test_brains/out.brain

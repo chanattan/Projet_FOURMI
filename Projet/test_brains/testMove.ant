@@ -1,0 +1,16 @@
+fun main(){
+	let i = 10 ;
+	move(failedMove, [3]) ;
+	turn(L) ;
+	if(eq !i 10){
+		drop()
+	}
+};
+
+fun failedMove(s){
+	let i = 0 ;
+	while (lt !i !s){
+		turn(R) ;
+		let i = add !i 1
+	}
+}

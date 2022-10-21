@@ -1,0 +1,12 @@
+fun main(){
+	if(eq sum(3,2) 5){
+		turn(L)
+	};
+	if(eq !a 3){
+		turn(R)
+	}
+};
+
+fun sum(a,b){
+	add !a !b
+}

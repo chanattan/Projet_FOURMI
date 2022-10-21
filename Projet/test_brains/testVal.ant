@@ -1,13 +1,13 @@
 fun main(){
-6437;
-true;
-
-let testint = 6437;
-let testbool = true;
-let testadd = add 5 3;
-let testsub = sub 5 3;
-let testmul = mul 5 3;
-let testdiv = div 5 3;
-let testmod = mod 5 3
-
+	let a = 1 ;
+	let b = 3 ;
+	let a = 2 ;
+	let c = 5 ;
+	
+	if(eq !a 2){
+		drop()
+	};
+	if(le !b !c){
+		turn(L)
+	}
 }

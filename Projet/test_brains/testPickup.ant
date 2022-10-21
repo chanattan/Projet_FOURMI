@@ -1,0 +1,11 @@
+fun failedPickup(){
+	let i = 0 ;
+	while(lt !i 3){
+		turn(L);
+		let i = add !i 1
+	}
+};
+
+fun main(){
+	pickup(failedPickup, [])
+}
