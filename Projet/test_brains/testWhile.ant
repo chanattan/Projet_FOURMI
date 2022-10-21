@@ -3,5 +3,18 @@ fun main(){
 	while(lt !i 3){
 		turn(L);
 		let i = add !i 1
+	};
+
+	while(true) {
+		drop()
+	};
+
+	while(false) {
+		turn(R)
+	};
+
+	while(true) {
+		let a = 2;
+		let a = add !a 2
 	}
 }

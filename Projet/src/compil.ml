@@ -25,10 +25,11 @@ let process_sensedir (sensed : sensedir) : string = match sensed with
   | Ahead -> "Ahead"
 
 (** Parcours l'environnement de fonction pour récupérer la liste des arguments et le corps associé *)
-let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program = match fun_env with
-  |[] -> failwith (name^" : Fonction non existante...")
-  |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
-  |(_,arg_list, prog)::_ -> arg_list,prog
+let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program =
+        match fun_env with
+        |[] -> failwith (name^" : Fonction non existante...")
+        |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
+        |(_,arg_list, prog)::_ -> arg_list,prog
 
   (** Ajoute à l'environnement les valeurs des arguments (en associant les noms aux valeurs évaluées)*)
 let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment =
@@ -62,36 +63,46 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                                  the return value of the expression is not a boolean.\n")
         (*Else est géré dans process_program pour prévoir l'expression précédente si c'est un if ou non*)
         | While((exp, spe), (prog, spp)), _ ->
-                let bool_val, new_env = eval (exp, spe) env file in
+                let bool_val, new_env = eval (exp, spe) env file in (*on évalue la condition*)
                 (match bool_val with
-                | Bool(True, _) -> (match exp with
-                | Const(Bool(True, spb), _) -> 
-                        Span.print spb stderr; failwith "[Type Error] :\
-                                 infinite while loop.\n" (*cas while(true)*)
-                | _ -> let value, new_env2 = process_program prog new_env file in (match value with
-                | Unit -> eval expr new_env2 file (*on réevalue toute l'expression dans le nouvel environnement*)
-                | _ -> Span.print spp stderr; failwith "[Type Error] :\
-                         Inside while loop expression is not type unit.\n")) 
-                | Bool(False, _) -> Unit, env
+                | Bool(True, _) -> (*si elle s'évalue à true*)
+                        (match exp with (*on vérifie la condition initiale*)
+                        | Const(Bool(True, _), _) -> (*cas while(true)*)
+                                process_while_true prog new_env file
+                        | _ -> let value, new_env2 = process_program prog new_env file in (*sinon cas while(exp) exp <=> true*)
+                                (match value with
+                                | Unit -> eval expr new_env2 file (*on réevalue toute l'expression dans le nouvel environnement*)
+                                | _ -> Span.print spp stderr; failwith "[Type Error] :\
+                                      Inside while loop expression is not type unit.\n")) 
+                | Bool(False, _) -> Unit, env (*false on évalue rien*)
                 | _ -> Span.print spe stderr; failwith "[Type Error] :\
                          the return value of the expression is not a boolean.\n")
         | DoWhile((prog, spp), (exp, spe)), _ ->
-                let value, new_env = process_program prog env file in
-                (match value with
-                | Unit -> let bool_val, new_env2 = eval (exp, spe) new_env file in (match bool_val with
-                | Bool(True, _) -> (match exp with
-                 | Const(Bool(True, _), _) -> Span.print spp stderr; failwith "[Type Error] :\
-                         infinite dowhile loop.\n"
-                | _ -> eval expr new_env2 file) (*on réevalue toute l'expression dans le nouvel environnement new_env2*)
-                | Bool(False, _) -> Unit, env
-                | _ -> Span.print spe stderr; failwith "[Type Error] :\
-                        the return value of the expression is not a boolean.\n")
-                | _ -> Span.print spp stderr; failwith "[Type Error] :\
-                        Inside do while loop the expression is not type unit.\n")
+                (match exp with (*on vérifie en amont si la condition est la constante true*)
+                                | Const(Bool(True, _), _) -> (*cas do while true équivalent à while true*)
+                                        process_while_true prog env file
+                              | _ -> (*si non alors on traite d'abord une fois le programme puis on vérifie la condition*)
+                                let value, new_env = process_program prog env file in
+                                (match value with
+                                | Unit -> let bool_val, new_env2 = eval (exp, spe) new_env file in
+                                (match bool_val with
+                                        | Bool(True, _) -> eval expr new_env2 file (*on réevalue toute l'expression dans le nouvel environnement new_env2*)
+                                        | Bool(False, _) -> Unit, env
+                                        | _ -> Span.print spe stderr; failwith "[Type Error] :\
+                                        the return value of the expression is not a boolean.\n")
+                                | _ -> Span.print spp stderr; failwith "[Type Error] :\
+                                Inside do while loop the expression is not type unit.\n"))
         | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
         (*Func est déjà traité dans la fonction start_program*)
         | Parenthesis(e),_ -> eval e env file
         | _ -> let exp, _ = expr in print_expression exp stderr; failwith "WIP"
+
+and process_while_true (prog : program) (env: environment) (file : out_channel) : value * environment =
+        let label = "while_"^(Int.to_string (!fun_counter)) in
+        fprintf file "%s:\n" label;
+        let value, new_env = process_program prog env file in
+        fprintf file "\tGoto %s\n" label; fun_counter := !fun_counter + 1;
+        value, new_env
 
 and process_condition (condi : cond) (env : environment) (file_out : out_channel) : string * environment = match condi with
   | Friend -> "Friend", env
@@ -349,6 +360,6 @@ let start_program (prog : program) (env: environment) (file_out : string) : unit
   fprintf file "main:\n" ; 
   let _,_ = process_program (!main_prog) new_env file in (* évaluation de la fonction main*)
   close_out file ; (* On ferme le fichier qu'on avait ouvert *)
-  let _ = Sys.command ("cat main.temp > "^file_out^";for f in fun_*.temp; do cat $f >> "^file_out^"; done") in (* On concatène les fichiers .temp dans file_out*)
+  let _ = Sys.command ("cat main.temp > "^file_out^";for f in fun_*.temp; do if [ -f $f ]; then cat $f >> "^file_out^"; fi; done") in (* On concatène les fichiers .temp dans file_out*)
   let _ = Sys.command "rm -f *.temp" in
   ()

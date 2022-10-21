@@ -1,4 +1,5 @@
+main:
 	Turn Left
-	Drop
-	Turn Left
+while_0:
 	Turn Right
+	Goto while_0

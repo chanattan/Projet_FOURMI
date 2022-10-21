@@ -2,5 +2,9 @@ fun main(){
 	let i = 0 ;
 	do{
 		turn(L)
-	}while(eq !i 1)
+	}while(eq !i 1);
+
+	do{
+		turn(R)
+	}while(true)
 }
