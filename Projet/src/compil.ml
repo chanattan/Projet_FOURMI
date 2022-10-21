@@ -22,6 +22,21 @@ type environment = value_env * function_env
 let fun_counter = ref 0
 
 
+(** Fonction qui écrit dans le .debug (qui n'est pas supprimé ssi on ctrl + c le programme) *)
+let write_to_debug_file (str,sp:string Span.located) : unit = 
+  let debug_file = open_out_gen [Open_append; Open_creat] 0o777 ".debug" in 
+  Span.print sp debug_file ; 
+  fprintf debug_file ": %s\n" str ;
+  close_out debug_file ; ()
+
+(** Petite fonction de debug pour transformer une value en string pour affichage *)
+let val_to_string (v:value) : string = match v with
+  |Unit -> "()"
+  |Bool(b,_) when b = True -> "true"
+  |Bool(_,_) -> "false"
+  |Int(i,_) -> Int.to_string i
+
+
 (** Affecte à la variable [str] la valeur [v] dans l'environnement [env]
     On ajoute simplement pour cela en tête de notre environnement le couple *)
 let bind_value (str:string) (v:value) (env:environment) : environment =
@@ -88,6 +103,9 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
         (*Else est géré dans process_program pour prévoir l'expression précédente si c'est un if ou non*)
         | While((exp, spe), (prog, spp)), _ ->
                 let bool_val, new_env = eval (exp, spe) env file in (*on évalue la condition*)
+                write_to_debug_file ("While : "^(val_to_string bool_val), spe);
+
+
                 (match bool_val with
                 | Bool(True, _) -> (*si elle s'évalue à true*)
                         (match exp with (*on vérifie la condition initiale*)
@@ -340,7 +358,11 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
           | _ -> Span.print sp stderr ; 
               failwith "[Type Error] : there was an error unmarking : type is not an int")
 	| Pickup((fun_name,sp), (arg_list,_)) ->
-          let value,new_env = process_apply (fun_name,sp) arg_list env file in value,new_env (* Ecrire le Pickup *)
+          let current_label,goto_label,_,_ = process_apply_nowrite (fun_name,sp) arg_list env file in 
+          fprintf file "  PickUp %s\n" goto_label ;
+          fprintf file "  Goto %s\n" current_label ;
+          fprintf file "%s:\n" current_label ;
+          Unit,env
 	| Turn(dir, _) -> (*dir représente la direction dans laquelle la fourmi va tourner*)
           (match dir with
           | Left -> fprintf file "  Turn Left\n"
@@ -417,9 +439,7 @@ and process_apply_nowrite (name,sp:string Span.located) (args_expr:expression Sp
 (** Crée le label de la fonction associée avec ses arguments dans un autre fichier et 
     renvoie le nom du label crée ainsi que le label du retour (current(original) * goto(la fonction)) et la valeur de retour et l'environnement après l'application de la fonction*)
 and create_fun_label (name,sp : string Span.located) (prog:program) ((apply_val_env,apply_fun_env):environment): string*string*value*environment = 
-  let debug_file = open_out_gen [Open_append; Open_creat] 0o777 ".debug" in 
-  fprintf debug_file "Appel : %s : " name ; Span.print sp debug_file ; fprintf debug_file "\n" ; 
-  close_out debug_file ;
+  write_to_debug_file (name,sp) ;
 
   let goto_label = "fun_"^name^Int.to_string (!fun_counter) in (* On crée un label unique de la future fonction (avec le temps) *)
   let current_label = "current_"^name^Int.to_string (!fun_counter) in (* On crée le label de retour de la fonction (ici) *)
