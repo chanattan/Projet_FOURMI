@@ -2,22 +2,41 @@ open Ast;;
 open Printf;;
 open CodeMap;;
 
-type value_env = (string * value) list
+
+(* Note général sur le code : 
+   Les fonctions étant préfixées par le mot-clé "process_" est une fonction permettant de soulager le code de la fonction eval, la fonction principale*)
+
+(* Environnement pour nos valeurs. Ce sont des couples entre les noms des variables et leur valeur associée
+   Seul la valeur la plus en tête est considérée *)
+type value_env = (string * value) list 
+
+(* Un environnement pour les noms des fonctions. Il s'agit d'une liste de triplet décrivant une fonction :
+  son nom pour l'identifier, le noms des arguments et le corps de la fonction *)
 type function_env = (string * (string list) * program) list (* nom de la fct, les arguments en nom pour remplacer, le label *)
+
+(* Un produit des environnements précédents pour faciliter le transport dans les fonctions *)
 type environment = value_env * function_env
 
+
+(* Compteur globale que l'on utilise pour générer des labels uniques en code fourmi *)
 let fun_counter = ref 0
 
+
+(** Affecte à la variable [str] la valeur [v] dans l'environnement [env]
+    On ajoute simplement pour cela en tête de notre environnement le couple *)
 let bind_value (str:string) (v:value) (env:environment) : environment =
         let (val_env, fun_env) = env in ((str,v)::val_env, fun_env)
 
+
+(** S'occupe du déréférencement des variables, à savoir le !<var>
+    On récupère dans notre environnement [val_env] la valeur associer à [str]*)
 let rec process_deref ((str,sp):string Span.located) (val_env : value_env) : value = 
     match val_env with
     | [] -> Span.print sp stderr; failwith "[Error] Trying to dereference a variable that has not been initialized.\n"
     | (name, v)::_ when name = str -> v
     | _::q -> process_deref (str,sp) q
 
-(** *)
+(** Permet de transformer un objet Sensedir en la chaîne compréhensible par le langage fourmi que l'on écrit plus loin*)
 let process_sensedir (sensed : sensedir) : string = match sensed with
   | LeftAhead -> "LeftAhead"
   | RightAhead -> "RightAhead"
@@ -25,22 +44,26 @@ let process_sensedir (sensed : sensedir) : string = match sensed with
   | Ahead -> "Ahead"
 
 (** Parcours l'environnement de fonction pour récupérer la liste des arguments et le corps associé *)
-let rec get_func_from_name (name:string) (val_env, fun_env : environment) : (string list) * program =
+let rec get_func_from_name (name,sp:string Span.located) (val_env, fun_env : environment) : (string list) * program =
         match fun_env with
-        |[] -> failwith (name^" : Fonction non existante...")
-        |(str,_,_)::q when str <> name -> get_func_from_name name (val_env, q) 
+        |[] -> Span.print sp stderr ; failwith (name^" : Fonction non existante...")
+        |(str,_,_)::q when str <> name -> get_func_from_name (name,sp) (val_env, q) 
         |(_,arg_list, prog)::_ -> arg_list,prog
 
-  (** Ajoute à l'environnement les valeurs des arguments (en associant les noms aux valeurs évaluées)*)
-let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment =
+(** Ajoute à l'environnement les valeurs des arguments (en associant les noms aux valeurs évaluées)
+    renvoit *)
+let rec update_env_for_fun (sp : Span.t) (arg_names:string list) (arg_values: value list) (val_env, fun_env: environment) : environment =
         match arg_names,arg_values with
         |[],[] ->  (val_env,fun_env)
-        |[],_ | _, [] -> failwith "Eh ? Pas le même nombre"
+        |[],_ | _, [] -> Span.print sp stderr ; failwith "[Type Error] : incorrect number of arguments."
         |name::qname, value::qvalue ->
-                let new_val_env,new_fun_env = update_env_for_fun qname qvalue (val_env,fun_env) in
+                let new_val_env,new_fun_env = update_env_for_fun sp qname qvalue (val_env,fun_env) in
                 ((name,value)::new_val_env, new_fun_env)
 
 
+(** Fonction principale du code : 
+    Elle permet de réduire / traiter une expression de manière récursive dans un environnement et potentiellement en écrivant dans un fichier
+    On renvoit la valeur de l'expression ainsi que l'environnement après *)
 let rec eval (expr : expression Span.located) (env : environment) (file : out_channel) : value * environment =
         match expr with
         | Const(v, _), _ ->  v, env
@@ -93,18 +116,25 @@ let rec eval (expr : expression Span.located) (env : environment) (file : out_ch
                                         the return value of the expression is not a boolean.\n")
                                 | _ -> Span.print spp stderr; failwith "[Type Error] :\
                                 Inside do while loop the expression is not type unit.\n"))
-        | Apply((name,_), (args_expr,_)),_ -> process_apply name args_expr env file
+        | Apply((name,sp), (args_expr,_)),_ -> process_apply (name,sp) args_expr env file
         (*Func est déjà traité dans la fonction start_program*)
         | Parenthesis(e),_ -> eval e env file
         | _ -> let exp, _ = expr in print_expression exp stderr; failwith "WIP"
 
+
+(** Traite le cas particulier du while(true){}
+    On crée un label sur lequel on ressaute ensuite*)
 and process_while_true (prog : program) (env: environment) (file : out_channel) : value * environment =
         let label = "while_"^(Int.to_string (!fun_counter)) in
+        fprintf file "  Goto %s\n" label ;
         fprintf file "%s:\n" label;
         let value, new_env = process_program prog env file in
-        fprintf file "\tGoto %s\n" label; fun_counter := !fun_counter + 1;
+        fprintf file "  Goto %s\n" label; fun_counter := !fun_counter + 1;
         value, new_env
 
+
+(** Traite les conditions utilisées par la fonction Sense.
+    On renvoit la chaîne de caractère associé à la condition prête à être écrite ainsi que l'environnement dans le cas d'une modification par Marker*)
 and process_condition (condi : cond) (env : environment) (file_out : out_channel) : string * environment = match condi with
   | Friend -> "Friend", env
   | Foe -> "Foe", env
@@ -115,12 +145,17 @@ and process_condition (condi : cond) (env : environment) (file_out : out_channel
   | Marker(expr)  ->
         let value, new_env = (eval expr env file_out) in
         (match value with
-        | Int(k, _) -> "Marker "^(Int.to_string k), new_env
+        | Int(k, _) when 0 <= k && k <= 5 -> "Marker "^(Int.to_string k), new_env
+        | Int(_, _) -> failwith "[Type Error] : marking with a value out of range [0,5].\n"
         | _ -> failwith "[Type Error] : the marker's expression return value type is not integer.\n")
   | FoeMarker -> "FoeMarker",env
   | Home -> "Home", env
   | FoeHome -> "FoeHome", env
 
+
+
+(** Permet de gérer les opérations arithémtiques de nos variables
+    On considère qu'on ne peut faire des opérations que sur les entiers, les autres renvoient une exception*)
 and process_operation (op : operation) (env : environment) (file : out_channel) : value * environment =
         match op with
         | Add((v1, sp), (v2, sp2)) ->
@@ -159,6 +194,10 @@ and process_operation (op : operation) (env : environment) (file : out_channel) 
                         | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
                                 there was an error while trying to use modulo.\n")
 
+
+
+(** Traite de manière séquentielle une suite d'instruction sous la forme d'un programme
+    On traite aussi le cas du if else puisque le else est optionnel et on a donc besoin de regarder les instructions 2 par 2*)
 and process_program (Program(program) : Ast.program) (env : environment) (file : out_channel) : value * environment = 
   match program with
     |[],_ -> Unit, env
@@ -190,67 +229,86 @@ and process_program (Program(program) : Ast.program) (env : environment) (file :
                  There is a non-last return value that is not type unit.\n"
               else value, new_env (*On utilise un comportement similaire à Caml qui retourne la dernière valeur qui n'est pas de type unit.*)
 
+
+
+(** Traite les comparaisons de value.
+    On autorise les égalités sur les bools et Unit mais pas de comparaison d'ordre dessus*)
 and process_compare (comp : compare) (env:environment) (file : out_channel) : bool * environment =
         match comp with
         | Eq(expr_left, expr_right) ->
-                let v1, new_env = eval (expr_left) env file in (*check type != unit*)
-                let v2, new_env2 = eval (expr_right) new_env file in
-                (match v1, v2 with
-                | Unit, Unit -> true, new_env2
-                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | Bool(b1, _), Bool(b2, _) -> (b1 = b2), new_env2
-                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | Int(v1, _), Int(v2, _) -> (v1 = v2), new_env2)
+            let v1, new_env = eval (expr_left) env file in (*check type != unit*)
+            let v2, new_env2 = eval (expr_right) new_env file in
+            (match v1, v2 with
+            | Unit, Unit -> true, new_env2
+            | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | Bool(b1, _), Bool(b2, _) -> (b1 = b2), new_env2
+            | Bool(_, sp), _ -> Span.print sp stderr; 
+              failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | _, Bool(_, sp) -> Span.print sp stderr; 
+              failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | Int(v1, _), Int(v2, _) -> (v1 = v2), new_env2)
         | Neq(expr_left, expr_right) ->
-                let v1, new_env = eval (expr_left) env file in (*check type != unit*)
-                let v2, new_env2 = eval (expr_right) new_env file in
-                (match v1, v2 with
-                | Unit, Unit -> false, new_env2
-                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | Bool(b1, _), Bool(b2, _) -> (b1 <> b2), new_env2
-                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | Int(v1, _), Int(v2, _) -> (v1 <> v2), new_env2)
+            let v1, new_env = eval (expr_left) env file in (*check type != unit*)
+            let v2, new_env2 = eval (expr_right) new_env file in
+            (match v1, v2 with
+            | Unit, Unit -> false, new_env2
+            | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | Bool(b1, _), Bool(b2, _) -> (b1 <> b2), new_env2
+            | Bool(_, sp), _ -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | _, Bool(_, sp) -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | Int(v1, _), Int(v2, _) -> (v1 <> v2), new_env2)
         | Inf(expr_left, expr_right) ->
-                let v1, new_env = eval (expr_left) env file in
-                let v2, new_env2 = eval (expr_right) new_env file in
-                (match v1, v2 with
-                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | Int(v1, _), Int(v2, _) -> (v1 <= v2), new_env2)
+            let v1, new_env = eval (expr_left) env file in
+            let v2, new_env2 = eval (expr_right) new_env file in
+            (match v1, v2 with
+            | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | Bool(_, sp), _ -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | _, Bool(_, sp) -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | Int(v1, _), Int(v2, _) -> (v1 <= v2), new_env2)
         | Sup(expr_left, expr_right) ->
-                let v1, new_env = eval (expr_left) env file in
-                let v2, new_env2 = eval (expr_right) new_env file in
-                (match v1, v2 with
-                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | Int(v1, _), Int(v2, _) -> (v1 >= v2), new_env2)
+            let v1, new_env = eval (expr_left) env file in
+            let v2, new_env2 = eval (expr_right) new_env file in
+            (match v1, v2 with
+            | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | Bool(_, sp), _ -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | _, Bool(_, sp) -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | Int(v1, _), Int(v2, _) -> (v1 >= v2), new_env2)
         | StInf(expr_left, expr_right) ->
-                let v1, new_env = eval (expr_left) env file in
-                let v2, new_env2 = eval (expr_right) new_env file in
-                (match v1, v2 with
-                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | Int(v1, _), Int(v2, _) -> (v1 < v2), new_env2)
+            let v1, new_env = eval (expr_left) env file in
+            let v2, new_env2 = eval (expr_right) new_env file in
+            (match v1, v2 with
+            | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | Bool(_, sp), _ -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | _, Bool(_, sp) -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | Int(v1, _), Int(v2, _) -> (v1 < v2), new_env2)
         | StSup(expr_left, expr_right) ->
-                let v1, new_env = eval (expr_left) env file in
-                let v2, new_env2 = eval (expr_right) new_env file in
-                (match v1, v2 with
-                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
-                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
-                | Int(v1, _), Int(v2, _) -> (v1 > v2), new_env2)
+            let v1, new_env = eval (expr_left) env file in
+            let v2, new_env2 = eval (expr_right) new_env file in
+            (match v1, v2 with
+            | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+            | Bool(_, sp), _ -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | _, Bool(_, sp) -> Span.print sp stderr; 
+                failwith "[Type Error] : Trying to compare bool with another type.\n"
+            | Int(v1, _), Int(v2, _) -> (v1 > v2), new_env2)
 
+
+(** On transforme une liste d'expressions en une liste de valeur
+    On évalue pour cela de la gauche vers la droite dans les nouveaux environnements successivement*)
 and eval_list (list: (expression Span.located) list) (env: environment) (file: out_channel) : value list * environment = 
   let new_env = ref env in
   let rec aux l = match l with
@@ -263,86 +321,95 @@ and eval_list (list: (expression Span.located) list) (env: environment) (file: o
     ATTENTION : on ne va pas changer l'environnement pour les fonctions avec des callbacks ie Move, Pickup, Sense, Flip (on renvoie alors Unit)
     On renvoie la valeur de retour potentiel des fonctions appelées ainsi que l'environnement potentiellement modifié par Mark par exemple*)
 and process_command (cmd: command) (env: environment) (file: out_channel) : value * environment =
-        match cmd with
-	| Move((name,_), (arg_list,_)) -> 
-                let current_label,goto_label,_,_ = process_apply_nowrite name arg_list env file in
-                fprintf file "\tMove %s\n" goto_label ; (* On écrit le move avec le potentiel appel*)
-                fprintf file "\tGoto %s\n" current_label; (* On exécute la suite si on a pas eu d'appel *)
-                fprintf file "%s:\n" current_label; (* Le label de retour dans tout les cas (le goto précédent ainsi que le retour de la fonction) *)
-                Unit, env (* Obliger de renvoyer Unit comme on ne peut pas déterminer statiquement. 
+  match cmd with
+	| Move((name,sp), (arg_list,_)) -> 
+          let current_label,goto_label,_,_ = process_apply_nowrite (name,sp) arg_list env file in
+          fprintf file "  Move %s\n" goto_label ; (* On écrit le move avec le potentiel appel*)
+          fprintf file "  Goto %s\n" current_label; (* On exécute la suite si on a pas eu d'appel *)
+          fprintf file "%s:\n" current_label; (* Le label de retour dans tout les cas (le goto précédent ainsi que le retour de la fonction) *)
+          Unit, env (* Obliger de renvoyer Unit comme on ne peut pas déterminer statiquement. 
        On ne prend pas en compte le changement d'environnement comme on est pas sûr à la compil du changement *)
 	| Mark(expr, sp) -> ((*i représente le ième bit à modifier sur la case marquée*)
-                let value, new_env = eval (expr,sp) env file in match value with
-                | Int(i,_) -> fprintf file "\tMark %d\n" i ; Unit, new_env
-                | _ -> Span.print sp stderr ; failwith "[Type Error] : there was an error marking : type is not an int")
+          let value, new_env = eval (expr,sp) env file in match value with
+          | Int(i,_) -> fprintf file "  Mark %d\n" i ; Unit, new_env
+          | _ -> Span.print sp stderr ; 
+              failwith "[Type Error] : there was an error marking : type is not an int")
 	| Unmark(expr, sp) -> ((*de même pour unmark*)
-                let value, new_env = eval (expr,sp) env file in match value with 
-                | Int(i,_) -> fprintf file "\tUnmark %d\n" i; Unit, new_env
-                | _ -> Span.print sp stderr ; failwith "[Type Error] : there was an error unmarking : type is not an int")
-	| Pickup((fun_name,_), (arg_list,_)) ->
-                let value,new_env = process_apply fun_name arg_list env file in value,new_env (* Ecrire le Pickup *)
+          let value, new_env = eval (expr,sp) env file in match value with 
+          | Int(i,_) -> fprintf file "  Unmark %d\n" i; Unit, new_env
+          | _ -> Span.print sp stderr ; 
+              failwith "[Type Error] : there was an error unmarking : type is not an int")
+	| Pickup((fun_name,sp), (arg_list,_)) ->
+          let value,new_env = process_apply (fun_name,sp) arg_list env file in value,new_env (* Ecrire le Pickup *)
 	| Turn(dir, _) -> (*dir représente la direction dans laquelle la fourmi va tourner*)
-                (match dir with
-                | Left -> fprintf file "\tTurn Left\n"
-                | Right -> fprintf file "\tTurn Right\n");
+          (match dir with
+          | Left -> fprintf file "  Turn Left\n"
+          | Right -> fprintf file "  Turn Right\n");
         Unit,env
-	| Sense((sensd,_), (condition,_) , (name_true,_), (name_false,_),(arg_list_true,_), (arg_list_false,_)) ->  (* Sense va, selon la condition et pour une direction sensd donnée, évaluer la fonction func_name_true sur arg_list_true ou func_name_false sur arg_list_false*)
-                let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
-                let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
-                let str_cond,new_env = process_condition condition env file in
-                fprintf file "\tSense %s %s %s %s\n" (process_sensedir sensd) goto_label_true goto_label_false str_cond ;
-                fprintf file "\tGoto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
-                fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
-                fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
-                fprintf file "%s: \n" current_label_true ;
-                Unit,new_env
-        | Flip((expr_i,sp), (name_true,_), (name_false,_), (arg_list_true,_), (arg_list_false,_)) ->
-                        (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
-                        let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
-                        let value, new_env = eval (expr_i,sp) env file in 
-                        let val_i = (match value with
-                                |Int(i,_) -> i
-                                |_ -> Span.print sp stderr ; failwith "[Type Error] : Flip argument wasn't an int") in
-                        fprintf file "\tFlip %i %s %s\n" val_i goto_label_true goto_label_false;
-                        fprintf file "\tGoto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
-                        fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
-                        fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
-                        fprintf file "%s: \n" current_label_true ;
-                        Unit,new_env)
-        | Drop -> fprintf file "\tDrop\n" ; Unit,env
-        | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
-                        |Int(i,_) -> 
-                        for _ = 0 to i - 1 do 
-                        let label = ("wait_"^(Int.to_string (!fun_counter))) in
-                        fprintf file "\tGoto %s\n" label ;
-                        fprintf file "%s:\n" label;
-                        incr fun_counter
-                        done;
-                        Unit,new_env
-                        |_ -> Span.print sp stderr ; 
-                        failwith "[Type Error] : wait argument wasn't an int")
+	| Sense((sensd,_), (condition,_) , (name_true,sp_true), (name_false,sp_false),(arg_list_true,_), (arg_list_false,_)) ->  (* Sense va, selon la condition et pour une direction sensd donnée, évaluer la fonction func_name_true sur arg_list_true ou func_name_false sur arg_list_false*)
+          let current_label_true,goto_label_true,_,_ = 
+            process_apply_nowrite (name_true,sp_true) arg_list_true env file in
+          let current_label_false,goto_label_false,_,_ = 
+            process_apply_nowrite (name_false,sp_false) arg_list_false env file in
+          let str_cond,new_env = process_condition condition env file in
+          fprintf file "  Sense %s %s %s %s\n" (process_sensedir sensd) goto_label_true goto_label_false str_cond ;
+          fprintf file "  Goto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
+          fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
+          fprintf file "  Goto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
+          fprintf file "%s: \n" current_label_true ;
+          Unit,new_env
+  | Flip((expr_i,sp), (name_true,sp_true), (name_false,sp_false), (arg_list_true,_), (arg_list_false,_)) ->
+          (let current_label_true,goto_label_true,_,_ = 
+            process_apply_nowrite (name_true,sp_true) arg_list_true env file in
+          let current_label_false,goto_label_false,_,_ = 
+            process_apply_nowrite (name_false,sp_false) arg_list_false env file in
+          let value, new_env = eval (expr_i,sp) env file in 
+          let val_i = (match value with
+                  |Int(i,_) -> i
+                  |_ -> Span.print sp stderr ; 
+                      failwith "[Type Error] : Flip argument wasn't an int") in
+          fprintf file "  Flip %i %s %s\n" val_i goto_label_true goto_label_false;
+          fprintf file "  Goto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
+          fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
+          fprintf file "  Goto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
+          fprintf file "%s: \n" current_label_true ;
+          Unit,new_env)
+  | Drop -> fprintf file "  Drop\n" ; Unit,env
+  | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
+          |Int(i,_) -> 
+            for _ = 0 to i - 1 do 
+              let label = ("wait_"^(Int.to_string (!fun_counter))) in
+              fprintf file "  Goto %s\n" label ;
+              fprintf file "%s:\n" label;
+              incr fun_counter
+            done;
+            Unit,new_env
+          |_ -> Span.print sp stderr ; 
+            failwith "[Type Error] : wait argument wasn't an int")
 
-(** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié
-  On va rajouter des labels pour s'occuper des sauts avant et après *)
-and process_apply (name:string) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value * environment = 
-  let arg_names,prog = get_func_from_name name (val_env,fun_env) in (* On récupère les informations de la fonction *)
+(** On traite l'appel de fonction en créant les labels de retour des différentes fonctions.
+    On écrit directement le label où devra revenir la fonction appelée *)
+and process_apply (name,sp:string Span.located) (args_expr:expression Span.located list) (val_env,fun_env:environment) (file : out_channel) : value * environment = 
+  let arg_names,prog = get_func_from_name (name,sp) (val_env,fun_env) in (* On récupère les informations de la fonction *)
   let (arg_values,(new_val_env,new_fun_env)) = eval_list args_expr  (val_env,fun_env) file in (* On évalue nos arguments *)
-  let apply_val_env,apply_fun_env = update_env_for_fun arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
+  let apply_val_env,apply_fun_env = update_env_for_fun sp arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
   
   (* Il faut écrire le goto avec le nouveau label, le nouveau label quelque part (dans un tout nouveau fichier unique à chaque fois que l'on re-fusionne à la fin) *)
   let current_label,goto_label,v,post_env = create_fun_label name prog (apply_val_env, apply_fun_env) in
 
-  fprintf file "\tGoto %s \n" goto_label ; (* On fait "l'appel" à la fonction en allant à son label *)
+  fprintf file "  Goto %s \n" goto_label ; (* On fait "l'appel" à la fonction en allant à son label *)
   fprintf file "%s:\n" (current_label) ; (* On écrit dans le fichier le label de retour de la fonction ici *)
   
   v, post_env
 
-and process_apply_nowrite (name:string) (args_expr:expression Span.located list) ((val_env,fun_env):environment) (file : out_channel) : string * string *value * environment = 
-  let arg_names,prog = get_func_from_name name (val_env,fun_env) in (* On récupère les informations de la fonction *)
+
+(** Même fonction qu'avant mais on n'écrit pas le label où doit revenir la fonction (mais on le calcule et renvoit)*)
+and process_apply_nowrite (name,sp:string Span.located) (args_expr:expression Span.located list) ((val_env,fun_env):environment) (file : out_channel) : string * string *value * environment = 
+  let arg_names,prog = get_func_from_name (name,sp) (val_env,fun_env) in (* On récupère les informations de la fonction *)
   let (arg_values,(new_val_env,new_fun_env)) =
   eval_list args_expr (val_env,fun_env) file in (* On évalue nos arguments *)
   let apply_val_env,apply_fun_env =
-  update_env_for_fun arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
+  update_env_for_fun sp arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
   (* Il faut écrire le goto avec le nouveau label, le nouveau label quelque part (dans un tout nouveau fichier unique à chaque fois que l'on re-fusionne à la fin) *)
   create_fun_label name prog (apply_val_env, apply_fun_env)
 
@@ -357,12 +424,17 @@ and create_fun_label (name : string) (prog:program) ((apply_val_env,apply_fun_en
   let new_file = open_out  (goto_label^".temp") in (* On crée le flux pour le nouveau fichier *)
   fprintf new_file "%s:\n" (goto_label) ; (* On écrit au début du nouveau fichier le label associé à l'appel de la fonction *)
   let v,post_env = process_program prog (apply_val_env,apply_fun_env) new_file in (* On process ce qui signifie qu'on écrit le programme dans le fichier. L'environnement est *)
-  fprintf new_file "\tGoto %s\n" (current_label) ; (* On écrit le goto de retour (comme le return) à la fin du nouveau fichier *)
+  fprintf new_file "  Goto %s\n" (current_label) ; (* On écrit le goto de retour (comme le return) à la fin du nouveau fichier *)
   close_out new_file ;
 
   current_label,goto_label,v,post_env
 
 
+  (** Fonction qui lance la compilation
+      On commence par remplir l'environnement des fonctions en faisant un premier parcours du code
+      On note en particulier le code associé à la fonction main
+      On l'exécute ensuite en écrivant dans le fichier main.temp
+      Pour finir, on écrit tout dans un seul fichier en concaténant avec un script bash et on supprime les fichiers temporarire *)
 let start_program (prog : program) (env: environment) (file_out : string) : unit = 
   let main_prog = ref prog in (*variable qui va se souvenir du programme de main*)
   let rec aux (Program(prog_bis) : program) (env_bis : environment) : environment =
