@@ -40,6 +40,7 @@ let rec update_env_for_fun (arg_names:string list) (arg_values: value list) (val
                 let new_val_env,new_fun_env = update_env_for_fun qname qvalue (val_env,fun_env) in
                 ((name,value)::new_val_env, new_fun_env)
 
+
 let rec eval (expr : expression Span.located) (env : environment) (file : out_channel) : value * environment =
         match expr with
         | Const(v, _), _ ->  v, env
@@ -129,34 +130,34 @@ and process_operation (op : operation) (env : environment) (file : out_channel) 
                         | Int(i, spp), Int(y, _) -> Int(i + y, spp), new_env2
                         | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
                                 there was an error while trying to sum up two values.\n")
-| Sub((v1, sp), (v2, sp2)) ->
-        let value, new_env = (eval (v1, sp) env file) in
-        let value2, new_env2 = (eval (v2, sp2) new_env file) in
+        | Sub((v1, sp), (v2, sp2)) ->
+                let value, new_env = (eval (v1, sp) env file) in
+                let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                        (match value, value2 with
+                        | Int(i, spp), Int(y, _) -> Int(i - y, spp), new_env2
+                        | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                                there was an error while trying to substract two values.\n")
+        | Mul((v1, sp), (v2, sp2)) ->
+                let value, new_env = (eval (v1, sp) env file) in
+                let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                        (match value, value2 with
+                        | Int(i, spp), Int(y, _) -> Int(i * y, spp), new_env2
+                        | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                                there was an error while trying to multiply two values.\n")
+        | Div((v1, sp), (v2, sp2)) ->
+                let value, new_env = (eval (v1, sp) env file) in
+                let value2, new_env2 = (eval (v2, sp2) new_env file) in
+                        (match value, value2 with
+                        | Int(i, spp), Int(y, _) -> Int(i / y, spp), new_env2
+                        | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                                there was an error while trying to divide two values.\n")
+        | Mod((v1, sp), (v2, sp2)) ->
+                let value, new_env = (eval (v1, sp) env file) in
+                let value2, new_env2 = (eval (v2, sp2) new_env file) in
                 (match value, value2 with
-                | Int(i, spp), Int(y, _) -> Int(i - y, spp), new_env2
-                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
-                         there was an error while trying to substract two values.\n")
-| Mul((v1, sp), (v2, sp2)) ->
-        let value, new_env = (eval (v1, sp) env file) in
-        let value2, new_env2 = (eval (v2, sp2) new_env file) in
-                (match value, value2 with
-                | Int(i, spp), Int(y, _) -> Int(i * y, spp), new_env2
-                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
-                         there was an error while trying to multiply two values.\n")
-| Div((v1, sp), (v2, sp2)) ->
-        let value, new_env = (eval (v1, sp) env file) in
-        let value2, new_env2 = (eval (v2, sp2) new_env file) in
-                (match value, value2 with
-                | Int(i, spp), Int(y, _) -> Int(i / y, spp), new_env2
-                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
-                         there was an error while trying to divide two values.\n")
-| Mod((v1, sp), (v2, sp2)) ->
-        let value, new_env = (eval (v1, sp) env file) in
-        let value2, new_env2 = (eval (v2, sp2) new_env file) in
-        (match value, value2 with
-                | Int(i, spp), Int(y, _) -> Int(i mod y, spp), new_env2
-                | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
-                         there was an error while trying to use modulo.\n")
+                        | Int(i, spp), Int(y, _) -> Int(i mod y, spp), new_env2
+                        | _, _ -> Span.print sp stderr; failwith "[Type Error] :\
+                                there was an error while trying to use modulo.\n")
 
 and process_program (Program(program) : Ast.program) (env : environment) (file : out_channel) : value * environment = 
   match program with
@@ -284,31 +285,31 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
                 fprintf file "%s: \n" current_label_true ;
                 Unit,new_env
-  | Flip((expr_i,sp), (name_true,_), (arg_list_true,_),(name_false,_),(arg_list_false,_)) ->
-                (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
-                let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
-                let value, new_env = eval (expr_i,sp) env file in 
-                let val_i = (match value with
-                        |Int(i,_) -> i
-                        |_ -> Span.print sp stderr ; failwith "[Type Error] : Flip argument wasn't an int") in
-                fprintf file "\tFlip %i %s %s\n" val_i goto_label_true goto_label_false;
-                fprintf file "\tGoto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
-                fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
-                fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
-                fprintf file "%s: \n" current_label_true ;
-                Unit,new_env)
-  | Drop -> fprintf file "\tDrop\n" ; Unit,env
-  | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
-                |Int(i,_) -> 
-                  for _ = 0 to i - 1 do 
-                    let label = ("wait_"^(Int.to_string (!fun_counter))) in
-                    fprintf file "\tGoto %s\n" label ;
-                    fprintf file "%s:\n" label;
-                  incr fun_counter
-                  done;
-                    Unit,new_env
-                |_ -> Span.print sp stderr ; 
-                failwith "[Type Error] : wait argument wasn't an int")
+        | Flip((expr_i,sp), (name_true,_), (arg_list_true,_),(name_false,_),(arg_list_false,_)) ->
+                        (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
+                        let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
+                        let value, new_env = eval (expr_i,sp) env file in 
+                        let val_i = (match value with
+                                |Int(i,_) -> i
+                                |_ -> Span.print sp stderr ; failwith "[Type Error] : Flip argument wasn't an int") in
+                        fprintf file "\tFlip %i %s %s\n" val_i goto_label_true goto_label_false;
+                        fprintf file "\tGoto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
+                        fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
+                        fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
+                        fprintf file "%s: \n" current_label_true ;
+                        Unit,new_env)
+        | Drop -> fprintf file "\tDrop\n" ; Unit,env
+        | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
+                        |Int(i,_) -> 
+                        for _ = 0 to i - 1 do 
+                        let label = ("wait_"^(Int.to_string (!fun_counter))) in
+                        fprintf file "\tGoto %s\n" label ;
+                        fprintf file "%s:\n" label;
+                        incr fun_counter
+                        done;
+                        Unit,new_env
+                        |_ -> Span.print sp stderr ; 
+                        failwith "[Type Error] : wait argument wasn't an int")
 
 (** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié
   On va rajouter des labels pour s'occuper des sauts avant et après *)

@@ -1,0 +1,5 @@
+fun main() {
+	let a = 2;
+	let b = 1;
+	let c = sub !b !a
+}

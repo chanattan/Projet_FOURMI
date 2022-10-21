@@ -1,5 +1,1 @@
 main:
-	Turn Left
-while_0:
-	Turn Right
-	Goto while_0
