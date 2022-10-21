@@ -12,9 +12,10 @@ La grammaire est fournie dans le fichier lang.grammar.\
 Le fichier en sortie est un .brain et contient le code de base compréhensible par la fourmi.\
 La partie décrivant le paradigme du langage éclaircit la syntaxe du langage.
 
-# Implémentations réussies
+### Implémentations réussies
 Le code du compilateur actuel ne semble pas porter de problèmes et a été traité dans son ensemble.\
 Ont été implémentées les tâches suivantes :
+
 - Fonctions avec arguments et valeur de retour de la fonction
 - Variables globales statiques
 - Environnements
@@ -22,7 +23,7 @@ Ont été implémentées les tâches suivantes :
 - Commandes primaires
 - Typage
 - Else optionnel
-- 
+
 ---
 
 > ## II/ Syntaxe basique
