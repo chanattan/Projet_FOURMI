@@ -6,11 +6,15 @@ La fourmi ne peut que se déplacer, regarder son environnenemt et poser ou enlev
 La grammaire est fournie dans le fichier lang.grammar.\
 Le fichier en sortie est un .brain et contient le code de base compréhensible par la fourmi.\
 
+<<<<<<< HEAD
 ---
 
 > ## II/ Syntaxe et usage
 
 > ### Types de base :
+=======
+### Types de base :
+>>>>>>> 2c8a3355147a1e04f4e95eee296b331060c4d2ed
 - \<**expression**\> : instructions de déclaration de variables et fonctions, deréférencement de variables, application de fonctions et expressions à évaluer (comparaisons, commandes primaires de fourmi) ainsi que de structures de contrôle. La syntaxe est décrite plus bas.
 - \<**program**\> : suite non vide d'expressions séparées par des ";". La dernière expression évaluée de cette suite est le type de retour du programme.\
 Les expressions qui précédent la dernière doivent s'évaluer au type **unit** (cf. value) (le détail est expliqué dans la partie paradigme).
@@ -30,6 +34,7 @@ Les expressions qui précédent la dernière doivent s'évaluer au type **unit**
 
 - On utilise la syntaxe <name*,> lorqu'on veut transmettre une liste de \<name\> (éventuellement vide). (span located?)
 - Appeler une fonction nécessite de connaître son nom de type \<**ident**\> et ses arguments de type \<**expression,**\>.
+<<<<<<< HEAD
 <br><br/>
 > ### Expressions :
 > Ce sont les instructions principales du programme. Elle se terminent toutes par ';'.
@@ -97,15 +102,271 @@ Exécute une commande primaire que peut effectuer la fourmi (cf. Commandes prima
 
 
 - **Func** :
+=======
+
+
+### Opérations arithmétiques :
+Les opérations arithmétiques se font entre \<**expression**\> et produisent un \<**int**\>.\
+Etant donné deux expressions \<**expr1**\> et \<**expr2**\> le compilateur évaluera les deux expressions de manière à les réduire en \<**int**\> pour
+effectuer l'opération entre entiers.\
+Dans le cas d'une évaluation d'une expression qui ne se réduit pas en \<**int**\> alors le compilateur produit une erreur de type.
+
+        [Type Error] there was an error while trying to sum up two values.
+
+On ne s'autorise pas l'algèbre de Boole.
+
+Les opérations :
+
+- add <expr1> <expr2> : évalue les deux expressions en des entiers et ajoute deux entiers
+- sub <expr1> <expr2> : évalue les deux expressions en des entiers et soustrait deux entiers
+- mul <expr1> <expr2> : évalue les deux expressions en des entiers et multiplie deux entiers
+- div <expr1> <expr2> : évalue les deux expressions en des entiers et divise deux entiers (division euclidienne)
+- mod <expr1> <expr2> : évalue les deux expressions en des entiers et donne le reste de la division euclidienne de deux entiers
+
+### Comparaisons :
+Les comparaisons se font entre \<**expression**\> et produisent un \<**bool**\>.\
+Etant donné deux expressions \<**expr1**\> et \<**expr2**\> le compilateur évaluera les deux expressions de manière à déduire leur type \<**value**\> pour effectuer la comparaison.
+- Dans le cas d'une évaluation entre valeurs de type **unit**, seule l'**égalité** est tolérée et renvoie true à condition que les expressions comparées terminent (cas de comparaison de while).\
+Si le type **unit** est comparé avec un autre type que **unit**, alors pour toute comparaison cela échouera et produira un message d'erreur de ce type :
+
+        [Type Error] : Trying to compare unit with something.
+
+- Dans le cas d'une évaluation entre valeurs de type **int** alors la comparaison est une comparaison d'entiers.\
+Si le type **int* est comparé avec un autre type que **int**, alors pour toute comparaison cela échouera et produira un message d'erreur de type.
+- Dans le cas d'une évaluation entre valeurs de type **bool** alors la seule comparaison est une comparaison d'égalité de booléens.\
+Si le type **bool** est comparé avec un autre type que **bool**, alors pour toute autre comparaison cela échouera et produira un message d'erreur de type.
+
+- **égalité** :
+        
+        eq <expr1> <expr2>
+
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** = **v2**.
+
+- **strictement inférieur** :
+        
+        lt <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** < **v2**.
+
+- **strictement supérieur** :
+        
+        gt <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** > **v2**.
+- **supérieur ou égal** :
+    
+        le <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** <= **v2**.
+- **inférieur** :
+    
+        ge <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** >= **v2**.
+   
+### Commandes primaires :
+(Type : \<**expression**\>)\
+\
+Les commandes de base ou primaires décrivent les comportements primitifs des fourmis.
+- **Move** :
+
+        move(<ident>, [<expression>*,])
+        
+Permet de bouger la fourmi.\
+Dans le cas où la fourmi n'a pas réussi à avancer (présence d'un obstacle, d'une autre fourmi, ...), on appelle la fonction renseignée par \<ident\> et on lui passe les arguments passés dans [\<expression\>*,], il peut avoir 0 expression et chaque expression est séparée par une virgule.
+
+- **Mark** :
+
+        mark(i)
+
+Permet de mettre le bit i de la cellule visée à 1.
+
+- **Unmark** :
+
+        unmark(i)
+
+Permet de mettre le bit i de la cellule visée à 0.
+
+- **PickUp** :
+
+        pickup(<ident>, [<expression*,>])
+
+Permet de prendre une nourriture sur la cellule où est la fourmi.\
+Dans le cas où cette action est impossible, on appelle la fonction renseignée par \<ident\> en lui passant les arguments passés dans [\<expression\>*,].
+
+- **Turn** :
+        
+        turn(<direction>)
+
+Tourne d'un sixième de tour la fourmi dans la direction fournie en argument (L ou R).
+
+- **Sense** :
+
+        sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+
+Test effectué directement sur le terrain : on regarde vers \<sensdir\> si la condition \<cond\> est vérifiée.\
+Si c'est vrai, on appelle la première fonction par avec ses arguments qui suivent l'ident.
+Sinon, on appelle la deuxième fonction avec ses arguments.
+
+- **Flip** :
+        
+        flip(<int>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+
+Permet d'effectuer un choix de manière aléatoire.\
+On a 1 chance sur \<int\> d'appeler la première fonction avec ses arguments. Dans l'autre cas, c'est l'autre fonction qui est appelée.
+
+### Conditions d'environnement :
+(Type : \<**expression**\>)\
+\
+Les conditions d'environnement sont les constantes qui permettent de se renseigner sur l'environnement proche de la fourmi.
+Ces conditions ne sont utilisables que dans la fonction **sense**. Elles sont toujours accompagnées d'une case sur laquelle on teste ces conditions (cf sense).
+
+- **Allié** :
+
+        ISFRIEND
+
+Détecte si la fourmi sur la case renseignée est dans la même équipe.
+
+- **Ennemi** :
+
+        ISFOE
+
+Détecte si la fourmi sur la case renseignée est dans l'équipe adverse.
+
+- **Allié avec nourriture** :
+
+        ISFRIENDWITHFOOD
+
+Détecte si la fourmi sur la case renseignée est un allié et si elle porte de la nourriture.
+
+- **Ennemi avec nourriture** :
+
+        ISFOEWITHFOOD
+
+Détecte si la fourmi sur la case renseignée est un ennemi et porte de la nourriture.
+
+- **Nourriture** :
+
+        ISFOOD
+
+Détecte s'il y a de la nourriture sur la case renseignée.
+
+- **Rocher** :
+        
+        ISROCK
+
+Détecte s'il y a un rocher (case non franchissable) sur la case renseignée.
+
+- **Marquer par une expression** :
+        
+        Marker(<expression>)
+
+Evalue l'expression en un entier i et marque la cellule au bit i à 1 sur laquelle la fourmi se trouve.
+        
+- **Est marquée** :
+        
+        ISMARKER
+
+Vérifie si la cellule sur laquelle la fourmi se trouve est marquée.
+
+- **Marqué par un ennemi** :
+        
+        ISFOEMARKER
+
+Détecte si sur la case sur laquelle la fourmi se trouve un marqueur a été changé par l'équipe adverse.
+
+- **Maison** :
+        
+        ISHOME
+
+Détecte si la case sur laquelle la fourmi se trouve est une case de sa base.
+
+- **Maison ennemie** :
+
+        ISFOEHOME
+
+Détecte si la case sur laquelle la fourmi se trouve est une case de la base adverse.
+>>>>>>> 2c8a3355147a1e04f4e95eee296b331060c4d2ed
 
         fun <ident>(<ident*,>) {<program>}
 
+<<<<<<< HEAD
+=======
+### Expressions :
+Ce sont les instructions principales du programme. Elle se terminent toutes par ';'.
+        
+- **Const** :
+    \<value\>
+
+Décrit une valeur constante : un int, bool ou unit.\
+Elle décrit surtout le type de l'évaluation d'une expression. (ex : add 5 6 donne un type **int**).
+
+- **Var** :
+        
+        let <ident> = <expression>
+
+Déclaration d'une variable par son identifiant \<**ident**\> et une \<**expression**\> qui une fois évaluée donnera la valeur de la variable de type \<**value**\>. La valeur est associée à l'identifiant \<**ident**\> dans l'environnement du programme actuel.
+
+- **If** :
+        
+        if (<expression>) {<program>}
+
+Permet d'exécuter le programme \<**program**\> seulement si l'évaluation de \<**expression**> donne le \<**bool**> **true**.
+
+- **Else** :
+
+        else {<program>}
+
+Ne peut exister qu'après un bloc if sous peine d'une erreur de syntaxe.\
+Permet d'exécuter le programme \<**program**\> seulement si l'évaluation de l'expression \<*expression**\> du if associé a renvoyé le \<**bool**\> **false**.
+
+- **While** :
+
+        while (<expression>) {<program>}
+        
+Execute le \<**program**\> tant que l'expression \<**expression**\> est évaluée en le \<**bool**\> **true** (on commence par évaluer l'expression).
+
+- **DoWhile** :
+
+        do {<program>} while (<expression>)
+
+Exécute une première fois le < program > puis le rexecute tant que l'expression < expression > est évaluée en le < bool > true (on commence par executer le programme).
+
+- **Compare** :
+        
+        <compare> <expr1> <expr2>
+
+Compare deux expressions qui s'évaluent en \<**value**\> et renvoie une valeur de type \<**bool**\>. (cf. Comparaisons pour \<**compare**\>)
+
+- **Operation** :
+
+        <operation> <expr1> <expr2>
+
+Effectue une opération entre deux expressions qui doivent s'évaluer en des \<**int**\> (cf. Opérations pour \<**operation**\>) et renvoie une valeur de type \<**int**\>.
+
+- **Command** :
+
+        <command>
+
+Exécute une commande primaire que peut effectuer la fourmi (cf. Commandes primaires).
+
+
+- **Func** :
+
+        fun <ident> (<ident*,>) {<program>}
+
+>>>>>>> 2c8a3355147a1e04f4e95eee296b331060c4d2ed
 Déclare une fonction de label \<**ident**\> prenant en argument une liste de variables \<**ident*,**\> qui exécute le programme \<**program**\>.
 La fonction retourne la valeur du programme \<**program**\> donc de la dernière expression évaluée dans \<**program**\> (cf. types et cf. paradigme).
 
 - Apply :
 
         <ident> (<expression*,>)
+<<<<<<< HEAD
+=======
+
+Applique la fonction identifiée par \<**ident**\> par les arguments passés dans \<**expression***,\> et renvoie la valeur de retour de la fonction.
+>>>>>>> 2c8a3355147a1e04f4e95eee296b331060c4d2ed
 
 Applique la fonction identifiée par \<**ident**\> par les arguments passés dans \<**expression***,\> et renvoie la valeur de retour de la fonction.
 <br><br/>
@@ -114,7 +375,11 @@ Applique la fonction identifiée par \<**ident**\> par les arguments passés dan
 Etant donné deux expressions \<**expr1**\> et \<**expr2**\> le compilateur évaluera les deux expressions de manière à les réduire en \<**int**\> pour
 effectuer l'opération entre entiers.
 
+<<<<<<< HEAD
 Dans le cas d'une évaluation d'une expression qui ne se réduit pas en \<**int**\> alors le compilateur produit une erreur de type.
+=======
+## II/ Détails du compilateur et paradigme du langage
+>>>>>>> 2c8a3355147a1e04f4e95eee296b331060c4d2ed
 
         [Type Error] there was an error while trying to sum up two values.
 
@@ -361,7 +626,11 @@ Por le doWhile, on évalue le programme et on a un new_Env dans lequel on évalu
 
 Dans le dossier test_brains, les fichiers test.ant peremettent de faire des tests unaires
 
+<<<<<<< HEAD
 ## V/ Evolutions
+=======
+## IV/ Evolutions
+>>>>>>> 2c8a3355147a1e04f4e95eee296b331060c4d2ed
 
 Le compilateur ne possède pas beaucoup de macros. On pourrait rajouter des fonctions implémentées dans le compilateur permettant de faire des actions plus évoluées et qui seraient appelées par un simple < ident >
 
