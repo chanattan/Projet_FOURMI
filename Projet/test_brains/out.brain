@@ -1,1 +1,5 @@
 main:
+	Goto fun_foo0 
+current_foo0:
+fun_foo0:
+	Goto current_foo0
