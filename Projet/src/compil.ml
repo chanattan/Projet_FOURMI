@@ -395,7 +395,7 @@ and process_apply (name,sp:string Span.located) (args_expr:expression Span.locat
   let apply_val_env,apply_fun_env = update_env_for_fun sp arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
   
   (* Il faut écrire le goto avec le nouveau label, le nouveau label quelque part (dans un tout nouveau fichier unique à chaque fois que l'on re-fusionne à la fin) *)
-  let current_label,goto_label,v,post_env = create_fun_label (name,p) prog (apply_val_env, apply_fun_env) in
+  let current_label,goto_label,v,post_env = create_fun_label (name,sp) prog (apply_val_env, apply_fun_env) in
 
   fprintf file "  Goto %s \n" goto_label ; (* On fait "l'appel" à la fonction en allant à son label *)
   fprintf file "%s:\n" (current_label) ; (* On écrit dans le fichier le label de retour de la fonction ici *)

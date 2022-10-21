@@ -53,6 +53,7 @@ let _ =
       eprintf "Parse error: %t: %t\n" (CodeMap.Span.print span) (Parser.print_error e)
     | Failure(str) -> (* Dans le cas d'un crash *)
       let _ = clean_temp () in (* On clean tous les fichiers .temp*)
+      let _ = Sys.command "rm -f *.debug" in (* Ici c'est un problème de compil donc le .debug n'est pas intéressant *)
       eprintf " : %s\n" str
 
   end
