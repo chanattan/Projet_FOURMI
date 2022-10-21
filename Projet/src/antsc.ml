@@ -30,9 +30,22 @@ let _ =
     exit 1
   end else begin
     try
+      let outfile = ref "" in
+      let srcfile = ref "" in
+      if n = 4 then begin
+        if Sys.argv.(1) <> "-o" then(
+          eprintf "Usage : antsc -o <output> <source file>";
+          exit 2 ;
+        );
+        outfile := Sys.argv.(2) ;
+        srcfile := Sys.argv.(3) ;
+      end else begin
+        eprintf "Usage : antsc -o <output> <source file>";
+        exit 2 ; 
+      end;
       (* On compile le fichier. *)
-      let program,_ = process_file (Sys.argv.(1)) in 
-      Compil.start_program (program) ([],[]) "out.brain"
+      let program,_ = process_file (!srcfile) in 
+      Compil.start_program (program) ([],[]) (!outfile)
     with
     | Lexer.Error (e, span) ->
       eprintf "Lex error: %t: %t\n" (CodeMap.Span.print span) (Lexer.print_error e)
