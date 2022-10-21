@@ -1,0 +1,216 @@
+fun main(){
+	let orientation = 0;
+	let dirHome = 0;
+	let dirFood = 0;
+	let estMarque = 0;
+
+	while(true){
+		sense( HERE, ISHOME, goOut, explorer, [;])
+	}
+};
+
+fun rien(){
+	wait(0)
+};
+
+fun tourne(dirT){
+	if (eq !dirT true){
+		turn(L);
+		addition(1)
+	};
+	else{
+		turn(R);
+		addition(5)
+	}
+};
+
+fun addition(varAdd){
+	let orientation = add !varAdd !orientation;
+	let orientation = mod !orientation 6
+};
+
+fun bougeT(dirBT){
+	if (eq !dirBT true){
+		turn(L);
+		addition(1);
+		if(neq !orientation 5){
+			move(tourne, [true])
+		}
+	
+	};
+	else{
+		turn(R);
+		addition(5);
+		if(neq !orientation 5){
+			move(tourne, [true])
+		}
+	}
+};
+
+fun bouge(){
+	if(neq !orientation 5){
+		move(tourne, [true])
+	}
+};
+
+
+fun goOut(){
+	let dedans = 0;
+	drop();
+
+	
+	sense (AHEAD, ISHOME, rien, bouge, [;]);
+	sense (LEFTAHEAD, ISHOME, rien, bougeT, [;true]);
+	sense (RIGHTAHEAD, ISHOME, rien, bougeT, [;false]);
+
+	tourne(true);
+	tourne(true);
+	tourne(true);
+
+	sense (AHEAD, ISHOME, rien, bouge, [;]);
+	sense (LEFTAHEAD, ISHOME, rien, bougeT, [;true]);
+	sense (RIGHTAHEAD, ISHOME, rien, bougeT, [;false]);
+
+	bouge();
+
+	while(neq !orientation 0){
+		tourne(true)
+	}
+};
+
+fun prendre(){
+	pickup(rien,[]);
+	lire(true);
+	sense(HERE, ISFRIENDWITHFOOD, revenir, partir, [;])
+
+};
+
+fun laisser(){
+	lire(false);
+	sense(HERE, ISFRIENDWITHFOOD, revenir, partir, [;])
+};
+
+fun explorer(){
+	pickup(rien,[]);
+	sense(HERE, ISFOOD, prendre, laisser, [;])
+};
+
+fun revenir(){
+	let dirHome = mod !dirHome 6;
+	if(neq !orientation !dirHome){
+		tourne(true)
+	};
+	if(neq !orientation !dirHome){
+		tourne(true)
+	};
+	if(neq !orientation !dirHome){
+		tourne(true)
+	};
+	if(neq !orientation !dirHome){
+		tourne(true)
+	};
+	if(neq !orientation !dirHome){
+		tourne(true)
+	};
+	if(neq !orientation !dirHome){
+		tourne(true)
+	};
+	bouge()
+		
+};
+
+fun partir(){
+	if(eq 0 !dirFood){
+		goRandom()
+	};
+	else{
+		let dirFood = mod !dirFood 6;
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		if(neq !orientation !dirFood){
+			tourne(true)
+		};
+		bouge()
+	}
+};
+
+fun goRandom(){
+	flip(2, bouge, tourne, [;true])
+};
+
+fun lire(bouffe){
+	let valLire = 0;
+	let iLire = 0;
+	let estMarque = 0;
+	let puiLire = 0;
+	while(le !iLire 4){
+		sense(HERE, ISMARKER !iLire, incrMarque, decrMarque, [;]);
+		let valLire = add !valLire (mul !estMarque !puiLire);
+		let iLire = add 1 !iLire;
+		let puiLire = mul !puiLire 2
+	};
+
+	let dirHome = div (sub !valLire 1) 6;
+	let dirFood = mod (sub !valLire 1) 6;
+	
+	ecrire(!bouffe)
+};
+
+fun incrMarque(){
+	let estMarque = 1
+};
+
+fun decrMarque(){
+	let estMarque = 0
+};
+
+fun ecrire(venirEcr){
+	let valEcr = 0;
+	if(eq !venirEcr true){
+		if(eq !dirHome 0){
+			let or = add 3 !orientation;
+			let or = mod !or 6;
+			let valEcr = !or
+		}
+	};
+	else{
+		if(eq !dirHome 0){
+			let or = add 3 !orientation;
+			let or = mod !or 6;
+			let valEcr = mul !or 6;
+			let valEcr = add !valEcr !orientation
+		};
+		else{
+			let valEcr = mul !dirHome 6;
+			let valEcr = add !valEcr !orientation
+		} 
+	};
+	
+	let ecriture = !valEcr;
+	let reste = 0;
+	let iEcr = 0;
+	while(le !iEcr 4){
+		let reste = mod !ecriture 2;
+		if(eq !reste 1){
+			mark(!iEcr)
+		};
+		let ecriture = sub (div !ecriture 2) !reste;
+		let iEcr = add 1 !iEcr
+	}
+}
