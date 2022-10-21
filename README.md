@@ -51,77 +51,79 @@ Les expressions qui précédent la dernière doivent s'évaluer au type **unit**
 <br><br/>
 > ### Expressions :
 > Ce sont les instructions principales du programme. Elle se terminent toutes par ';'.
-        
-- **Const** :
+
+Le type indiqué est le type donné après évaluation de l'expression.
+
+- **Const** : type de la valeur.
     \<value\>
 
 Décrit une valeur constante : un int, bool ou unit.\
 Elle décrit surtout le type de l'évaluation d'une expression. (ex : add 5 6 donne un type **int**).
 
-- **Var** :
+- **Var** : type **unit**.
         
         let <ident> = <expression>
 
 Déclaration d'une variable par son identifiant \<**ident**\> et une \<**expression**\> qui une fois évaluée donnera la valeur de la variable de type \<**value**\>. La valeur est associée à l'identifiant \<**ident**\> dans l'environnement du programme actuel (cf. paradigme).
 
-- **Déréférencement** :
+- **Déréférencement** : s'évalue au type de la valeur de la variable déréférencée.
         
         !<ident>
 
 Déréference la variable identifiée par \<**ident**\> et renvoie la valeur associée dans l'environnement actuel (cf. paradigme).
 
-- **If** :
+- **If** : type **unit**.
         
         if (<expression>) {<program>}
 
 Permet d'exécuter le programme \<**program**\> seulement si l'évaluation de \<**expression**> donne le \<**bool**> **true**.
 
-- **Else** :
+- **Else** : type **unit**.
 
         else {<program>}
 
 Ne peut exister qu'après un bloc if sous peine d'une erreur de syntaxe.\
 Permet d'exécuter le programme \<**program**\> seulement si l'évaluation de l'expression \<*expression**\> du if associé a renvoyé le \<**bool**\> **false**.
 
-- **While** :
+- **While** : type **unit**.
 
         while (<expression>) {<program>}
         
 Execute le \<**program**\> tant que l'expression \<**expression**\> est évaluée en le \<**bool**\> **true** (on commence par évaluer l'expression).
 
-- **DoWhile** :
+- **DoWhile** : type **unit**.
 
         do {<program>} while (<expression>)
 
 Exécute une première fois le < program > puis le rexecute tant que l'expression < expression > est évaluée en le < bool > true (on commence par executer le programme).
 
-- **Compare** :
+- **Compare** : type **bool**.
         
         <compare> <expr1> <expr2>
 
 Compare deux expressions qui s'évaluent en \<**value**\> et renvoie une valeur de type \<**bool**\>. (cf. Comparaisons pour \<**compare**\>)
 
-- **Operation** :
+- **Operation** : type **int**.
 
         <operation> <expr1> <expr2>
 
 Effectue une opération entre deux expressions qui doivent s'évaluer en des \<**int**\> (cf. Opérations pour \<**operation**\>) et renvoie une valeur de type \<**int**\>.
 
-- **Command** :
+- **Command** : type de la commande (cf. Commandes primaires).
 
         <command>
 
 Exécute une commande primaire que peut effectuer la fourmi (cf. Commandes primaires).
 
 
-- **Func** :
+- **Func** : type **unit**.
 
         fun <ident>(<ident*,>) {<program>}
 
 Déclare une fonction de label \<**ident**\> prenant en argument une liste de variables \<**ident*,**\> qui exécute le programme \<**program**\>.
 La fonction retourne la valeur du programme \<**program**\> donc de la dernière expression évaluée dans \<**program**\> (cf. types et cf. paradigme).
 
-- Apply :
+- **Apply** : type du retour de la fonction (type de la dernière expression évaluée dans la fonction).
 
         <ident> (<expression*,>)
 
@@ -207,60 +209,60 @@ Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alor
 \
 > Les commandes de base ou primaires décrivent les comportements primitifs des fourmis.
 
-- **Move** :
+- **Move** : type **unit**.
 
         move(<ident>, [<expression>*,])
         
 Permet de bouger la fourmi.\
 Dans le cas où la fourmi n'a pas réussi à avancer (présence d'un obstacle, d'une autre fourmi, ...), on appelle la fonction renseignée par \<ident\> et on lui passe les arguments passés dans [\<expression\>*,], il peut avoir 0 expression et chaque expression est séparée par une virgule.
 
-- **Mark** :
+- **Mark** : type **unit**.
 
         mark(i)
 
 Permet de mettre le bit i de la cellule visée à 1.
 
-- **Unmark** :
+- **Unmark** : type **unit**.
 
         unmark(i)
 
 Permet de mettre le bit i de la cellule visée à 0.
 
-- **PickUp** :
+- **PickUp** : type **unit**.
 
         pickup(<ident>, [<expression*,>])
 
 Permet de prendre une nourriture sur la cellule où est la fourmi.\
 Dans le cas où cette action est impossible, on appelle la fonction renseignée par \<ident\> en lui passant les arguments passés dans [\<expression\>*,].
 
-- **Turn** :
+- **Turn** : type **unit**.
         
         turn(<direction>)
 
 Tourne d'un sixième de tour la fourmi dans la direction fournie en argument (L ou R).
 
-- **Sense** :
+- **Sense** : type **unit**.
 
         sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
 
 Test effectué directement sur le terrain : on regarde vers \<sensdir\> si la condition \<cond\> est vérifiée.\
 Si c'est vrai, on appelle la première fonction par avec ses arguments qui suivent l'ident. Sinon, on appelle la deuxième fonction avec ses arguments.
 
-Directions **sensedir** :
+Directions **sensedir** : type **unit**.
         
         LEFTAHEAD : devant à gauche
         RIGHTAHEAD : devant à droite
         HERE : position actuelle
         AHEAD : devant
 
-- **Flip** :
+- **Flip** : type **unit**.
         
         flip(<int>, <ident>, [<expression*,>], <ident>, [<expression*,>])
 
 Permet d'effectuer un choix de manière aléatoire.\
 On a 1 chance sur \<int\> d'appeler la première fonction avec ses arguments. Dans l'autre cas, c'est l'autre fonction qui est appelée.
 
-- **Wait** :
+- **Wait** : type **unit**.
 
         wait(<expression>)
 
