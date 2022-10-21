@@ -1,5 +1,5 @@
-open CodeMap
-open Ast
+open CodeMap;;
+open Ast;;
 
 type value_env = (string * value) list
 type function_env = (string * (string list) * program) list
@@ -8,7 +8,7 @@ type environment = value_env * function_env
 val bind_value : string -> value -> environment -> environment
 val get_func_from_name : string Span.located -> environment -> (string list) * program
 val update_env_for_fun : Span.t -> string list -> value list -> environment -> environment
-val create_fun_label : string -> program -> environment -> string*string*value*environment 
+val create_fun_label : (string Span.located) -> program -> environment -> string*string*value*environment 
 
 
 val start_program : program -> environment -> string -> unit 

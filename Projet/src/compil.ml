@@ -395,7 +395,7 @@ and process_apply (name,sp:string Span.located) (args_expr:expression Span.locat
   let apply_val_env,apply_fun_env = update_env_for_fun sp arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
   
   (* Il faut écrire le goto avec le nouveau label, le nouveau label quelque part (dans un tout nouveau fichier unique à chaque fois que l'on re-fusionne à la fin) *)
-  let current_label,goto_label,v,post_env = create_fun_label name prog (apply_val_env, apply_fun_env) in
+  let current_label,goto_label,v,post_env = create_fun_label (name,p) prog (apply_val_env, apply_fun_env) in
 
   fprintf file "  Goto %s \n" goto_label ; (* On fait "l'appel" à la fonction en allant à son label *)
   fprintf file "%s:\n" (current_label) ; (* On écrit dans le fichier le label de retour de la fonction ici *)
@@ -411,12 +411,16 @@ and process_apply_nowrite (name,sp:string Span.located) (args_expr:expression Sp
   let apply_val_env,apply_fun_env =
   update_env_for_fun sp arg_names arg_values  (new_val_env,new_fun_env) in (* On met à jour l'environnement avec les arguments pour la fonction*)
   (* Il faut écrire le goto avec le nouveau label, le nouveau label quelque part (dans un tout nouveau fichier unique à chaque fois que l'on re-fusionne à la fin) *)
-  create_fun_label name prog (apply_val_env, apply_fun_env)
+  create_fun_label (name,sp) prog (apply_val_env, apply_fun_env)
 
 
 (** Crée le label de la fonction associée avec ses arguments dans un autre fichier et 
     renvoie le nom du label crée ainsi que le label du retour (current(original) * goto(la fonction)) et la valeur de retour et l'environnement après l'application de la fonction*)
-and create_fun_label (name : string) (prog:program) ((apply_val_env,apply_fun_env):environment): string*string*value*environment = 
+and create_fun_label (name,sp : string Span.located) (prog:program) ((apply_val_env,apply_fun_env):environment): string*string*value*environment = 
+  let debug_file = open_out_gen [Open_append] Ob666 ".debug" in 
+  fprintf debug_file "Appel : %s : %s\n " name sp;
+  close_out debug_file ;
+
   let goto_label = "fun_"^name^Int.to_string (!fun_counter) in (* On crée un label unique de la future fonction (avec le temps) *)
   let current_label = "current_"^name^Int.to_string (!fun_counter) in (* On crée le label de retour de la fonction (ici) *)
   incr fun_counter ;
@@ -457,4 +461,5 @@ let start_program (prog : program) (env: environment) (file_out : string) : unit
   close_out file ; (* On ferme le fichier qu'on avait ouvert *)
   let _ = Sys.command ("cat main.temp > "^file_out^";for f in fun_*.temp; do if [ -f $f ]; then cat $f >> "^file_out^"; fi; done") in (* On concatène les fichiers .temp dans file_out*)
   let _ = Sys.command "rm -f *.temp" in
+  let _ = Sys.command "rm -f *.debug" in
   ()
