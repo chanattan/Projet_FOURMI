@@ -20,3 +20,4 @@ Projet/parser_generator/simple-parser-gen
 .vscode
 Projet/**/*.temp
 Projet/**/out.brain
+Projet/**.debug

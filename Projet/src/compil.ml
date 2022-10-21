@@ -417,7 +417,7 @@ and process_apply_nowrite (name,sp:string Span.located) (args_expr:expression Sp
 (** Crée le label de la fonction associée avec ses arguments dans un autre fichier et 
     renvoie le nom du label crée ainsi que le label du retour (current(original) * goto(la fonction)) et la valeur de retour et l'environnement après l'application de la fonction*)
 and create_fun_label (name,sp : string Span.located) (prog:program) ((apply_val_env,apply_fun_env):environment): string*string*value*environment = 
-  let debug_file = open_out_gen [Open_append; Open_creat] 0o666 ".debug" in 
+  let debug_file = open_out_gen [Open_append; Open_creat] 0o777 ".debug" in 
   fprintf debug_file "Appel : %s : " name ; Span.print sp debug_file ; fprintf debug_file "\n" ; 
   close_out debug_file ;
 
