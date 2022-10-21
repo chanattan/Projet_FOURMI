@@ -1,15 +1,11 @@
 open Printf;;
 
-let write_file filename = (* Ceci est un exemple. *)
-  let oc = open_out filename in (* Ouvre un fichier pour écrire dedans. *)
-  let write_label (msg:string) : unit = (* Écriture d'un label. *)
-    fprintf oc "%s:\n" msg in
-  let write_command (msg:string) : unit = (* Écriture d'autres commandes. *)
-    fprintf oc "  %s\n" msg in
-  write_label   "start";
-  write_command "Drop";
-  write_command "Goto start";
-  close_out oc
+
+let clean_temp () : int = Sys.command "rm -f *.temp"
+
+let handle_sig (signal:int) : unit= match signal with
+  |s when s = Sys.sigint -> let _ = clean_temp () in exit 2
+  |_ -> failwith "Unexcepted handling of signal" 
 
 let process_file filename =
   (* Ouvre le fichier et créé un lexer. *)
@@ -22,6 +18,10 @@ let process_file filename =
 
 (* Le point de départ du compilateur. *)
 let _ =
+
+  (* On gère le signal Ctrl + C au cas où pour nettoyer les fichiers*)
+  let _ = Sys.signal Sys.sigint (Signal_handle handle_sig) in
+
   (* On commence par lire le nom du fichier à compiler passé en paramètre. *)
   let n = Array.length Sys.argv in
   if n <= 1 then begin
@@ -39,7 +39,7 @@ let _ =
     | Parser.Error (e, span) ->
       eprintf "Parse error: %t: %t\n" (CodeMap.Span.print span) (Parser.print_error e)
     | Failure(str) -> (* Dans le cas d'un crash *)
-      let _ = Sys.command "rm -f *.temp" in (* On clean tous les fichiers .temp*)
+      let _ = clean_temp () in (* On clean tous les fichiers .temp*)
       eprintf " : %s" str
 
   end
