@@ -8,16 +8,16 @@ fun main(){
     };
 
     if (false) {
-	turn(L)
+	   turn(L)
     }; else{
         drop()
     };
 
     if (true) {
-	turn(R)
+	   turn(R)
     }; else {
-	drop()
-    }
+	   drop()
+    };
 
     if (false){
         turn(R)

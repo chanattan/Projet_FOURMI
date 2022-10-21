@@ -22,5 +22,5 @@ fun main() {
 		turn(R)
 	}; else {
 		turn(L)
-	};
+	}
 }
