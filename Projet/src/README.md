@@ -8,12 +8,13 @@ Le fichier en sortie est un .brain et contient le code de base compréhensible p
 
 ### Types de base :
 - \<**expression**\> : instructions de déclaration de variables et fonctions, deréférencement de variables, application de fonctions et expressions à évaluer (comparaisons, commandes primaires de fourmi) ainsi que de structures de contrôle. La syntaxe est décrite plus bas.
-- \<**program**\> : suite non vide d'expressions séparées par des ";".
+- \<**program**\> : suite non vide d'expressions séparées par des ";". La dernière expression évaluée de cette suite est le type de retour du programme.\
+Les expressions qui précédent la dernière doivent s'évaluer au type **unit** (cf. value) (le détail est expliqué dans la partie paradigme).
 - \<**value**\> : Valeur de plusieurs sous types :
 
-        int : entier naturel.
+        int : entier naturel (ex : 5, 18).
         bool : booléen (true ou false).
-        unit : expression sans type.
+        unit : expression sans type (ex : while).
 
 - \<**ident**\> : identificateur qui définit le nom des fonctions et des variables *(chaîne de caractères)*.
 - \<**direction**\> : direction vers laquelle une fourmi va se tourner.
@@ -22,7 +23,6 @@ Le fichier en sortie est un .brain et contient le code de base compréhensible p
 
         R : tourner à droite d'un sixième de tour.
         L : tourner à gauche d'un sixième de tour.
-
 
 - On utilise la syntaxe <name*,> lorqu'on veut transmettre une liste de \<name\> (éventuellement vide). (span located?)
 - Appeler une fonction nécessite de connaître son nom de type \<**ident**\> et ses arguments de type \<**expression,**\>.
@@ -57,18 +57,35 @@ Si le type **unit** est comparé avec un autre type que **unit**, alors pour tou
 - Dans le cas d'une évaluation entre valeurs de type **int** alors la comparaison est une comparaison d'entiers.\
 Si le type **int* est comparé avec un autre type que **int**, alors pour toute comparaison cela échouera et produira un message d'erreur de type.
 - Dans le cas d'une évaluation entre valeurs de type **bool** alors la seule comparaison est une comparaison d'égalité de booléens.\
-Si le type **bool** est comparé avec un autre type que **bool**, alors pour toute comparaison cela échouera et produira un message d'erreur de type.
+Si le type **bool** est comparé avec un autre type que **bool**, alors pour toute autre comparaison cela échouera et produira un message d'erreur de type.
 
 - **égalité** :
-    eq \<expression\> \<expression\>
+        
+        eq <expr1> <expr2>
+
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** = **v2**.
+
 - **strictement inférieur** :
-    lt \<expression\> \<expression\>
+        
+        lt <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** < **v2**.
+
 - **strictement supérieur** :
-    gt \<expression\> \<expression\>
+        
+        gt <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** > **v2**.
 - **supérieur ou égal** :
-    le \<expression\> \<expression\>
+    
+        le <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** <= **v2**.
 - **inférieur** :
-    ge \<expression\> \<expression\>
+    
+        ge <expr1> <expr2>
+        
+Si **expr1** et **expr2** se réduisent en **v1** et **v2** de type **int** alors cela renvoie un **bool** résultat de : **v1** >= **v2**.
    
 ### Commandes primaires :
 (Type : \<**expression**\>)\
@@ -93,121 +110,178 @@ Permet de mettre le bit i de la cellule visée à 1.
 
 Permet de mettre le bit i de la cellule visée à 0.
 
-- PickUp :
+- **PickUp** :
 
         pickup(<ident>, [<expression*,>])
 
 Permet de prendre une nourriture sur la cellule où est la fourmi.\
 Dans le cas où cette action est impossible, on appelle la fonction renseignée par \<ident\> en lui passant les arguments passés dans [\<expression\>*,].
 
-- Turn :
+- **Turn** :
         
         turn(<direction>)
 
-Tourne d'un sixième de tour la fourmi dans la direction fournie en argument(L ou R)
+Tourne d'un sixième de tour la fourmi dans la direction fournie en argument (L ou R).
 
-- Sense :
-    sense(< sensedir >, < cond >, < ident >, [<expression*,>], < ident >, [<expression*,>])
-Test effectué directement sur le terrain : on regarde vers sensdir si la condition cond est vérifiée.
-Si c'est le cas, on appelle la première fonction avec ses arguments. Sinon, on appelle la deuxième fonction avec ses arguments
+- **Sense** :
 
-- Flip :
-    flip(< int >, < ident >, [<expression*,>], < ident >, [<expression*,>])
-Permet d'effectuer un choix de manière aléatoire.
-On a 1 chance sur < int > d'appeler la première fonction avec ses arguments. Dans l'autre cas, c'est l'autre fonction qui est appelée
+        sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+
+Test effectué directement sur le terrain : on regarde vers \<sensdir\> si la condition \<cond\> est vérifiée.\
+Si c'est vrai, on appelle la première fonction par avec ses arguments qui suivent l'ident.
+Sinon, on appelle la deuxième fonction avec ses arguments.
+
+- **Flip** :
+        
+        flip(<int>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+
+Permet d'effectuer un choix de manière aléatoire.\
+On a 1 chance sur \<int\> d'appeler la première fonction avec ses arguments. Dans l'autre cas, c'est l'autre fonction qui est appelée.
+
+### Conditions d'environnement :
+(Type : \<**expression**\>)\
+\
+Les conditions d'environnement sont les constantes qui permettent de se renseigner sur l'environnement proche de la fourmi.
+Ces conditions ne sont utilisables que dans la fonction **sense**. Elles sont toujours accompagnées d'une case sur laquelle on teste ces conditions (cf sense).
+
+- **Allié** :
+
+        ISFRIEND
+
+Détecte si la fourmi sur la case renseignée est dans la même équipe.
+
+- **Ennemi** :
+
+        ISFOE
+
+Détecte si la fourmi sur la case renseignée est dans l'équipe adverse.
+
+- **Allié avec nourriture** :
+
+        ISFRIENDWITHFOOD
+
+Détecte si la fourmi sur la case renseignée est un allié et si elle porte de la nourriture.
+
+- **Ennemi avec nourriture** :
+
+        ISFOEWITHFOOD
+
+Détecte si la fourmi sur la case renseignée est un ennemi et porte de la nourriture.
+
+- **Nourriture** :
+
+        ISFOOD
+
+Détecte s'il y a de la nourriture sur la case renseignée.
+
+- **Rocher** :
+        
+        ISROCK
+
+Détecte s'il y a un rocher (case non franchissable) sur la case renseignée.
+
+- **Marquer par une expression** :
+        
+        Marker(<expression>)
+
+Evalue l'expression en un entier i et marque la cellule au bit i à 1 sur laquelle la fourmi se trouve.
+        
+- **Est marquée** :
+        
+        ISMARKER
+
+Vérifie si la cellule sur laquelle la fourmi se trouve est marquée.
+
+- **Marqué par un ennemi** :
+        
+        ISFOEMARKER
+
+Détecte si sur la case sur laquelle la fourmi se trouve un marqueur a été changé par l'équipe adverse.
+
+- **Maison** :
+        
+        ISHOME
+
+Détecte si la case sur laquelle la fourmi se trouve est une case de sa base.
+
+- **Maison ennemie** :
+
+        ISFOEHOME
+
+Détecte si la case sur laquelle la fourmi se trouve est une case de la base adverse.
 
 
+### Expressions :
+Ce sont les instructions principales du programme. Elle se terminent toutes par ';'.
+        
+- **Const** :
+    \<value\>
 
-### Conditions : (renvoient un unit)
-Ce sont les constatnes qui permettent de se renseigner sur l'environnement proche de la fourmi.
-Ces conditions ne sont utilisables que dans la fonction sense. Elles sont toujours accompagnées d'une case sur laquelle on teste ces conditions (cf sense)
-- Friend :
-    IS_FRIEND
-Détecte si la fourmi sur la case renseignée est dans la même équipe
+Décrit une valeur constante : un int, bool ou unit.\
+Elle décrit surtout le type de l'évaluation d'une expression. (ex : add 5 6 donne un type **int**).
 
-- Foe :
-    IS_FOE
-Détecte si la fourmi sur la case renseignée est dans l'équipe adverse
+- **Var** :
+        
+        let <ident> = <expression>
 
-- FriendWithFood :
-    IS_FRIEND_WITH_FOOD
-Détecte si la fourmi sur la case renseignée est un allié et si elle porte de la nourriture
+Déclaration d'une variable par son identifiant \<**ident**\> et une \<**expression**\> qui une fois évaluée donnera la valeur de la variable de type \<**value**\>. La valeur est associée à l'identifiant \<**ident**\> dans l'environnement du programme actuel.
 
-- FoeWithFood :
-    IS_FOE_WITH_FOOD
-Détecte si la fourmi sur la case renseignée est un ennemi et porte de la nourriture
+- **If** :
+        
+        if (<expression>) {<program>}
 
-- Food :
-    IS_FOOD
-Détecte s'il y a de la nourriture sur la case renseignée
+Permet d'exécuter le programme \<**program**\> seulement si l'évaluation de \<**expression**> donne le \<**bool**> **true**.
 
-- Rock :
-    IS_ROCK
-Détecte s'il y a un rocher(cases non franchissable) sur la case renseignée
+- **Else** :
 
-- Marker(< expression >)) :
-    IS_MARKER
-Evalue l'expression en un entier i et regarde si le marqueur i de la case renseignée est à 1
+        else {<program>}
 
-- FoeMarker :
-    IS_FOE_MARKER
-Détecte si sur la case renseignée des marqueurs ont été changés par l'équipe adverse
+Ne peut exister qu'après un bloc if sous peine d'une erreur de syntaxe.\
+Permet d'exécuter le programme \<**program**\> seulement si l'évaluation de l'expression \<*expression**\> du if associé a renvoyé le \<**bool**\> **false**.
 
-- Home :
-    IS_HOME
-Détecte si la case renseignée est une case de sa base
+- **While** :
 
-- FoeHome :
-    IS_FOE_HOME
-Détecte si la case renseignée est une case de la base adverse
+        while (<expression>) {<program>}
+        
+Execute le \<**program**\> tant que l'expression \<**expression**\> est évaluée en le \<**bool**\> **true** (on commence par évaluer l'expression).
+
+- **DoWhile** :
+
+        do {<program>} while (<expression>)
+
+Exécute une première fois le < program > puis le rexecute tant que l'expression < expression > est évaluée en le < bool > true (on commence par executer le programme).
+
+- **Compare** :
+        
+        <compare> <expr1> <expr2>
+
+Compare deux expressions qui s'évaluent en \<**value**\> et renvoie une valeur de type \<**bool**\>. (cf. Comparaisons pour \<**compare**\>)
+
+- **Operation** :
+
+        <operation> <expr1> <expr2>
+
+Effectue une opération entre deux expressions qui doivent s'évaluer en des \<**int**\> (cf. Opérations pour \<**operation**\>) et renvoie une valeur de type \<**int**\>.
+
+- **Command** :
+
+        <command>
+
+Exécute une commande primaire que peut effectuer la fourmi (cf. Commandes primaires).
 
 
-### Expressions : (renvoient une value(int, bool ou unit))
-Ce sont les instructions du programme. Elle se terminent toutes par ';'
-- Const :
-    < value >
-On renseigne une < value >
+- **Func** :
 
-- Var :
-    let < ident > = < expression >
-On déclare une variable par son identifiant < ident > et une < expression > qui une fois évaluée donnera la valeur de la variable de type < value >.
+        fun <ident> (<ident*,>) {<program>}
 
-- If :
-    if (< expression >) {< program >}
-Permet d'exécuter le programme < program > seulement si l'évaluation de < expression > a renvoyé le < bool > true
-
-- Else :
-    else {< program >}
-Ne peut exister qu'après un if.
-Permet d'exécuter le programme < program > seulement si l'évaluation de l'expression < expression > du if associé a renvoyé le < bool > false
-
-- While :
-    while (< expression >) {< program >}
-Execute le < program > tant que l'expression < expression > est évaluée en le < bool > true (on commence par évaluer l'expression)
-
-- DoWhile :
-    do {< program >} while (< expression >)
-Execute une première fois le < program > puis le rexecute tant que l'expression < expression > est évaluée en le < bool > true (on commence par executer le programme)
-
-- Compare :
-    < compare >
-Renseigne une comparaison entre deux expressions qui doivent s'évaluer en des < int > (cf Comparaisons)
-
-- Operation :
-    < operation >
-Effectue une opération entre deux expressions qui doivent s'évaluer en des < int > (cf Comparaisons)
-
-- Command :
-    < command >
-Renseigne une commande de base que peut effectuer la fourmi (cf Commandes de base)
+Déclare une fonction de label \<**ident**\> prenant en argument une liste de variables \<**ident*,**\> qui exécute le programme \<**program**\>.
+La fonction retourne la valeur du programme \<**program**\> donc de la dernière expression évaluée dans \<**program**\> (cf. types et cf. paradigme).
 
 - Apply :
-    < ident >(<expression*,>)
-Renvoie la valeur de retour de la fonction < ident > appelée avec les arguments passés dans <expression*,>
 
-- Func :
-    fun < ident >(<ident*,>) {< program >}
-Permet de déclarer une fonction de label < ident > prennant en argument une liste de variables (la liste <ident*,>) qui execute le programme < program >
+        <ident> (<expression*,>)
+
+Applique la fonction identifiée par \<**ident**\> par les arguments passés dans \<**expression***,\> et renvoie la valeur de retour de la fonction.
 
 
 ## II/ Détails du compilateur et paradigme du langage
