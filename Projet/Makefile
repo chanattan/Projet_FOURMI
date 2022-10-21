@@ -58,4 +58,7 @@ mrproper: clean
 	rm -f antsc antsc.install
 	$(MAKE) --directory parser_generator mrproper
 
+test: 
+	for f in ./test_brains/*.ant ; do ./antsc -o $$f.out $$f ; done
+
 .PHONY: parser clean mrproper deps uninstall_deps
