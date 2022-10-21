@@ -13,7 +13,7 @@ let bind_value (str:string) (v:value) (env:environment) : environment =
 
 let rec process_deref ((str,sp):string Span.located) (val_env : value_env) : value = 
     match val_env with
-    | [] -> Span.print sp stderr; failwith "[Error] Trying to dereference a variable that is not initialized.\n"
+    | [] -> Span.print sp stderr; failwith "[Error] Trying to dereference a variable that has not been initialized.\n"
     | (name, v)::_ when name = str -> v
     | _::q -> process_deref (str,sp) q
 
