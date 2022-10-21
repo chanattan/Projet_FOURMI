@@ -5,7 +5,7 @@ let clean_temp () : int = Sys.command "rm -f *.temp"
 
 let handle_sig (signal:int) : unit= match signal with
   |s when s = Sys.sigint -> let _ = clean_temp () in exit 2
-  |_ -> failwith "Unexcepted handling of signal" 
+  |_ -> failwith "Unexcepted handling of signal\n" 
 
 let process_file filename =
   (* Ouvre le fichier et créé un lexer. *)
@@ -13,7 +13,7 @@ let process_file filename =
   let lexer = Lexer.of_channel file in
   (* Parse le fichier. *)
   let (program, span) = Parser.parse_program lexer in
-  printf "successfully parsed the following program at position %t:\n%t\n" (CodeMap.Span.print span) (Ast.print_program program) ;
+  (* printf "successfully parsed the following program at position %t:\n%t\n" (CodeMap.Span.print span) (Ast.print_program program) ; *)
   program, span
 
 (* Le point de départ du compilateur. *)
@@ -34,13 +34,13 @@ let _ =
       let srcfile = ref "" in
       if n = 4 then begin
         if Sys.argv.(1) <> "-o" then(
-          eprintf "Usage : antsc -o <output> <source file>";
+          eprintf "Usage : antsc -o <output> <source file>\n";
           exit 2 ;
         );
         outfile := Sys.argv.(2) ;
         srcfile := Sys.argv.(3) ;
       end else begin
-        eprintf "Usage : antsc -o <output> <source file>";
+        eprintf "Usage : antsc -o <output> <source file>\n";
         exit 2 ; 
       end;
       (* On compile le fichier. *)
@@ -53,6 +53,6 @@ let _ =
       eprintf "Parse error: %t: %t\n" (CodeMap.Span.print span) (Parser.print_error e)
     | Failure(str) -> (* Dans le cas d'un crash *)
       let _ = clean_temp () in (* On clean tous les fichiers .temp*)
-      eprintf " : %s" str
+      eprintf " : %s\n" str
 
   end
