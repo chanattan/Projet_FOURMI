@@ -1,4 +1,5 @@
-# Documentation du langage Ocamrd
+# Documentation du langage OCAMRD
+> OCAMRD : Outil de Conception et d'Amélioration de Machine Rustiquement Développé
 
 > ## I/ Présentation
 Ce compilateur permet de transformer un langage de haut niveau en "langage fourmi", un langage réduit à de simples instructions compréhensibles par une fourmi.\
@@ -331,17 +332,18 @@ Détecte si la case sur laquelle la fourmi se trouve est une case de la base adv
 ## III/ Détails du compilateur et paradigme du langage
 
 > On décrira ici les choix du langage effectués qui constituent le paradigme mais également le comportement et les détails du compilateur.
+> Cela permet d'éclaircir l'utilisation du langage et nos implémentations.
 
 > **Environnement** : un environnement est un couple de deux listes de la forme *(var_env, func_env)*.\
 La première liste est un environnement de variables. La deuxième liste est un environnement de fonctions.
 
-- **Environnement de variables** : liste de couples de la forme (\<**string**\>, \<**value**\>) qui permet d'associer à la variable du label renseigné dans \<**string**\> une valeur \<**value**\>.
-<br/>
-- **Environnement de fonctions** : liste de triplets (\<**string**\>, <expression*,>, \<**string**\>) qui permet d'associer la fonction identifiée par le label \<**string**\> et des arguments \<**expression\*,**\> à un label renseigné dans le dernier \<**string**\>.
-<br/>
-- Les **variables** ont une **portée** et une **durée** de vie **infinie**.
-<br/>
-- L'environnement est **modifié** à chaque **évalution** d'expression.
+**Environnement de variables** : liste de couples de la forme (\<**string**\>, \<**value**\>) qui permet d'associer à la variable du label renseigné dans \<**string**\> une valeur \<**value**\>.
+<br><br/>
+**Environnement de fonctions** : liste de triplets (\<**string**\>, <expression*,>, \<**string**\>) qui permet d'associer la fonction identifiée par le label \<**string**\> et des arguments \<**expression\*,**\> à un label renseigné dans le dernier \<**string**\>.
+<br><br/>
+Les **variables** ont une **portée** et une **durée** de vie **infinie**.
+<br><br/>
+L'environnement est **modifié** à chaque **évalution** d'expression.
 La création d'une variable dans un environnement se fait en partant du début de la liste. Cela permet de modifier/associer sa valeur en temps constant juste en réécrivant un nouveau couple (\<**string**\>, \<**value**\>) en début de liste avec la nouvelle valeur \<**value**\>.
 
 - Le déréférencement d'une variable dans un environnement se fait en partant du début de la liste aussi, afin de récupérer la dernière association de valeur à l'identifiant de la variable déréférencée.
@@ -391,11 +393,8 @@ L'environnement du programme est mis à jour à chaque itération ce qui change 
 **Notons que la syntaxe des programmes précédents concernant les points virgules est correcte et doit être telle quelle : pas de point virgule à la fin d'un programme et donc pas à l'instruction de retour de fonction ou de structure de contrôle.**
 
 - Une même fonction peut être écrite plusieurs fois à la compilation si elle est appelée avec plusieurs arguments différents.
-<br/>
 - Lorsqu'on appelle une commande de base, on peut exécuter la fonction passée en argument avec ses paramètres mais on revient forcément à l'instruction de la commande de base après (par un Goto) et on continue le programme de la manière séquentielle.
-<br/>
-- Dans les instructions while, lorsqu'on évalue l'expression (condition), on retourne un nouvel environnement dans lequel on appelle process_program qui évalue le corps de la boucle qui retourne un nouvel environnement new_env2 dans lequel on évalue une nouvelle fois \<**expression**\> (condition), etc.
-<br/>
+- Dans les instructions while, lorsqu'on évalue l'expression (condition), on retourne un nouvel environnement dans lequel on appelle process_program qui évalue le corps de la boucle qui retourne un nouvel environnement new_env2 dans lequel on évalue une nouvelle fois <expression> (condition), etc.
 - Pour le doWhile, on évalue le programme et on a un new_env dans lequel on évalue la condition expr qui retourne un nouvel environnement new_env2 et un booléen qui s'il vaut true alors on réevalue l'ensemble de l'instruction (tout le doWhile) dans le nouvel environnement new_env2 sinon on stoppe doWhile. (On souligne le fait que l'évaluation dans new_env2 garantit la terminaison de la boucle s'il y a car c'est dans ce dernier environnement que le corps de boucle susceptible de modifier la condition est évalué).\
 (La dernière évaluation de toute l'expression pourrait aussi se faire dans new_env, car la condition n'est supposée qu'être évaluée que en des booléens qui ne modifient pas l'environnement. Par sécurité, on utilise new_env2 dans lequel tout est évalué. Cette même remarque s'applique aussi pour le while).
 
@@ -429,10 +428,8 @@ ne compilera pas.
 Par conséquent le cas spécifique est while(true) qui permet de faire des boucles infinies grâce à Goto. Le compilateur va donc écrire le programme (corps de boucle) de manière statique dans le fichier sortie et boucler par un label et Goto, cependant pour tout changement d'environnement, en raison de l'écriture statique du programme dans le fichier sortie on ne peut réevaluer l'environnement engendré par le programme dans l'itération courante dans l'itération suivante.\
 Cela veut donc dire que l'environnement d'une boucle while est local et se réinitialise à chaque tour de boucle. Cela ne pose pas trop de problème dans notre usage de fourmis car la boucle while(true) est utilisée pour répéter les instructions en boucle de manière séquentielle comme un automate !
 - Le compilateur cherche toujours à commencer par la fonction main.
-<br/>
 - Les span permettent de repérer les erreurs dans le compilateur pour aller dans le noeud concerné dans l'AST.
-- process_compare est la fonction spécifique du compilateur qui va évaluer des comparaisons entre valeurs et retourner un booléen de Caml qui sera évalué dans le compilateur pour être retraduit en \<**bool**\> du langage. C'est un choix arbitraire de développement aura permi de simplifier un peu de code.
-
+- process_compare est la fonction spécifique du compilateur qui va évaluer des comparaisons entre valeurs et retourner un booléen de Caml qui sera évalué dans le compilateur pour être retraduit en <bool> du langage. C'est un choix arbitraire de développement aura permi de simplifier un peu de code.
 - Le If then Else a été géré pour que le Else soit optionnel, cela est engendré par la grammaire et donc force l'usage du ; entre les deux structures (if else), le fonctionnement est géré par le compilateur.
 
 ---
