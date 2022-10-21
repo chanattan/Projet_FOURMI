@@ -7,66 +7,103 @@ La grammaire est fournie dans le fichier lang.grammar.\
 Le fichier en sortie est un .brain et contient le code de base compréhensible par la fourmi.\
 
 ### Types de base :
-- <expression> : instructions de déclaration de variable et fonction, deréférencement de variable, application de fonction et expressions à évaluer (comparaisons, commandes primaires de fourmi) ainsi que de structures de contrôle.
-- < program > : ensemble de toutes les instructions qui composent le programme (liste non vide d'expression < expression >)
-- < value >: < int > : entiers
-            < bool > : booleens
-                true : vrai
-                false : faux
-            unit : expression sans type
-                unit
-- < ident > : sert à renseigner le nom des fonctions et des variables (chaine de caracteres)
-- < direction > : désigne une direction vers laquelle une fourmi va se tourner
-        R : tourner à droite d'un sixième de tour
-        L : tourner à gauche d'un sixième de tour
+- \<**expression**\> : instructions de déclaration de variables et fonctions, deréférencement de variables, application de fonctions et expressions à évaluer (comparaisons, commandes primaires de fourmi) ainsi que de structures de contrôle. La syntaxe est décrite plus bas.
+- \<**program**\> : suite non vide d'expressions séparées par des ";".
+- \<**value**\> : Valeur de plusieurs sous types :
+
+        int : entier naturel.
+        bool : booléen (true ou false).
+        unit : expression sans type.
+
+- \<**ident**\> : identificateur qui définit le nom des fonctions et des variables *(chaîne de caractères)*.
+- \<**direction**\> : direction vers laquelle une fourmi va se tourner.
+
+*Directions* :
+
+        R : tourner à droite d'un sixième de tour.
+        L : tourner à gauche d'un sixième de tour.
 
 
-- On utilise la syntaxe <name*,> lorqu'on veut transmettre une liste de < name > (éventuellement vide)
-- Appeler une fonction nécessite de connaître son nom de type < ident > et ses arguments de type < expression >
+- On utilise la syntaxe <name*,> lorqu'on veut transmettre une liste de \<name\> (éventuellement vide). (span located?)
+- Appeler une fonction nécessite de connaître son nom de type \<**ident**\> et ses arguments de type \<**expression,**\>.
 
 
-### Opérations de base: (renvoient un <int>)
-- add < expression > < expression > : évalue les deux expressions en des entiers et ajoute deux entiers
-- sub < expression > < expression > : évalue les deux expressions en des entiers et soustrait deux entiers
-- mul < expression > < expression > : évalue les deux expressions en des entiers et multiplie deux entiers
-- div < expression > < expression > : évalue les deux expressions en des entiers et divise deux entiers (division euclidienne)
-- mod < expression > < expression > : évalue les deux expressions en des entiers et donne le reste de la division euclidienne de deux entiers
+### Opérations arithmétiques :
+Les opérations arithmétiques se font entre \<**expression**\> et produisent un \<**int**\>.\
+Etant donné deux expressions \<**expr1**\> et \<**expr2**\> le compilateur évaluera les deux expressions de manière à les réduire en \<**int**\> pour
+effectuer l'opération entre entiers.\
+Dans le cas d'une évaluation d'une expression qui ne se réduit pas en \<**int**\> alors le compilateur produit une erreur de type.
 
-### Comparaisons: (renvoient un bool)
-/!\ Non utilisées par l'utilisateur. Ne sert que pour la construction de dans le compilateur. Renvoie un type bool de OCaml.
+        [Type Error] there was an error while trying to sum up two values.
 
-- égal :
-    eq < expression >, < expression >
-- inférieur ou égal :
-    lt < expression >, < expression >
-- supérieur ou égal :
-    gt < expression >, < expression >
-- strictement supérieur :
-    le < expression >, < expression >
-- strictement inférieur :
-    ge < expression >, < expression >
-Permet de comparer deux expressions après leur évaluation. Elles doivent être de type < int > pour être comparées.
+On ne s'autorise pas l'algèbre de Boole.
 
-### Commandes de base : (renvoient un unit)
-- Move :
-    move(< ident > < expression >)
-Dans le cas où la fourmi n'a pas réussi à avancer (présence d'un obstacle, d'une autre fourmi, ...), on appelle la fonction renseignée avec ident et on lui passe les arguments passés dans expression
+Les opérations :
 
-- Mark :
-    mark(i)
-Permet de mettre le bit i de la case visée à 0
+- add <expr1> <expr2> : évalue les deux expressions en des entiers et ajoute deux entiers
+- sub <expr1> <expr2> : évalue les deux expressions en des entiers et soustrait deux entiers
+- mul <expr1> <expr2> : évalue les deux expressions en des entiers et multiplie deux entiers
+- div <expr1> <expr2> : évalue les deux expressions en des entiers et divise deux entiers (division euclidienne)
+- mod <expr1> <expr2> : évalue les deux expressions en des entiers et donne le reste de la division euclidienne de deux entiers
 
-- Unmark :
-    unmark(i)
-Permet de mettre le bit i de la case visée à 0
+### Comparaisons :
+Les comparaisons se font entre \<**expression**\> et produisent un \<**bool**\>.\
+Etant donné deux expressions \<**expr1**\> et \<**expr2**\> le compilateur évaluera les deux expressions de manière à déduire leur type \<**value**\> pour effectuer la comparaison.
+- Dans le cas d'une évaluation entre valeurs de type **unit**, seule l'**égalité** est tolérée et renvoie true à condition que les expressions comparées terminent (cas de comparaison de while).\
+Si le type **unit** est comparé avec un autre type que **unit**, alors pour toute comparaison cela échouera et produira un message d'erreur de ce type :
+
+        [Type Error] : Trying to compare unit with something.
+
+- Dans le cas d'une évaluation entre valeurs de type **int** alors la comparaison est une comparaison d'entiers.\
+Si le type **int* est comparé avec un autre type que **int**, alors pour toute comparaison cela échouera et produira un message d'erreur de type.
+- Dans le cas d'une évaluation entre valeurs de type **bool** alors la seule comparaison est une comparaison d'égalité de booléens.\
+Si le type **bool** est comparé avec un autre type que **bool**, alors pour toute comparaison cela échouera et produira un message d'erreur de type.
+
+- **égalité** :
+    eq \<expression\> \<expression\>
+- **strictement inférieur** :
+    lt \<expression\> \<expression\>
+- **strictement supérieur** :
+    gt \<expression\> \<expression\>
+- **supérieur ou égal** :
+    le \<expression\> \<expression\>
+- **inférieur** :
+    ge \<expression\> \<expression\>
+   
+### Commandes primaires :
+(Type : \<**expression**\>)\
+\
+Les commandes de base ou primaires décrivent les comportements primitifs des fourmis.
+- **Move** :
+
+        move(<ident>, [<expression>*,])
+        
+Permet de bouger la fourmi.\
+Dans le cas où la fourmi n'a pas réussi à avancer (présence d'un obstacle, d'une autre fourmi, ...), on appelle la fonction renseignée par \<ident\> et on lui passe les arguments passés dans [\<expression\>*,], il peut avoir 0 expression et chaque expression est séparée par une virgule.
+
+- **Mark** :
+
+        mark(i)
+
+Permet de mettre le bit i de la cellule visée à 1.
+
+- **Unmark** :
+
+        unmark(i)
+
+Permet de mettre le bit i de la cellule visée à 0.
 
 - PickUp :
-    pickup(< ident >, [ < expression*, > ])
-Permet de prendre une nourriture sur la case où est la fourmi.
-Dans le cas où cette action est impossible, on appelle la fonction renseignée avec ident en lui passant les arguments passés dans < expression >
+
+        pickup(<ident>, [<expression*,>])
+
+Permet de prendre une nourriture sur la cellule où est la fourmi.\
+Dans le cas où cette action est impossible, on appelle la fonction renseignée par \<ident\> en lui passant les arguments passés dans [\<expression\>*,].
 
 - Turn :
-    turn(< direction >)
+        
+        turn(<direction>)
+
 Tourne d'un sixième de tour la fourmi dans la direction fournie en argument(L ou R)
 
 - Sense :
@@ -173,7 +210,7 @@ Renvoie la valeur de retour de la fonction < ident > appelée avec les arguments
 Permet de déclarer une fonction de label < ident > prennant en argument une liste de variables (la liste <ident*,>) qui execute le programme < program >
 
 
-## II/To go further
+## II/ Détails du compilateur et paradigme du langage
 
 Environnement : c'est un couple de deux listes. La première liste est un environnement de variables. La deuxième liste est un environnement de fonctions
 
@@ -192,7 +229,7 @@ On cherche une variable dans un environnement en partant du début de la liste. 
 
 - Dans les instructions while, lorsqu'on évalue l'expression, on retourne un nouvel environnement dans lequel on appelle process program sur le corps de la boucle qui retourne un new_Env2 dans lequel on évalue une nouvelle fois < expression >, etc.
 Por le doWhile, on évalue le programme et on a un new_Env dans lequel on évalue la condition expr qui retourne une newEnv2 et un booleen qui si vaut true alors on reevalue l'ensemble de l'instruction (tout le doWhile) dans le nouvel environnement newEnv2. (on souligne le fait que l'evaluation dans newEnv2 garantit la terminsaison de la boucle s'il y a)
-(La derniere evaluation de toute l'expresssion pourrait aussi se faire dans new_Env, car la condition n'est supposée qu'être évaluée que en des booleens. Par sécurité, on crée un new_nEv2. Cette même remarque s'applique aussi pour le while)
+(La derniere evaluation de toute l'expresssion pourrait aussi se faire dans new_Env, car la condition n'est supposée qu'être évaluée que en des booleens. Par sécurité, on crée un new_env2. Cette même remarque s'applique aussi pour le while)
 
 - Le compilateur cherche toujours à commencer par le main
 
@@ -202,7 +239,7 @@ Por le doWhile, on évalue le programme et on a un new_Env dans lequel on évalu
 
 Dans le dossier test_brains, les fichiers test.ant peremettent de faire des tests unaires
 
-## IV/
+## IV/ Evolutions
 
 Le compilateur ne possède pas beaucoup de macros. On pourrait rajouter des fonctions implémentées dans le compilateur permettant de faire des actions plus évoluées et qui seraient appelées par un simple < ident >
 
