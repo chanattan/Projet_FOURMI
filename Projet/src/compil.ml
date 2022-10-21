@@ -24,7 +24,7 @@ let fun_counter = ref 0
 
 (** Fonction qui écrit dans le .debug (qui n'est pas supprimé ssi on ctrl + c le programme) *)
 let write_to_debug_file (str,sp:string Span.located) : unit = 
-  let debug_file = open_out_gen [Open_append; Open_creat] 0o777 ".debug" in 
+  let debug_file = open_out_gen [Open_append; Open_creat] 0o666 ".debug" in 
   Span.print sp debug_file ; 
   fprintf debug_file ": %s\n" str ;
   close_out debug_file ; ()
@@ -481,5 +481,5 @@ let start_program (prog : program) (env: environment) (file_out : string) : unit
   close_out file ; (* On ferme le fichier qu'on avait ouvert *)
   let _ = Sys.command ("cat main.temp > "^file_out^";for f in fun_*.temp; do if [ -f $f ]; then cat $f >> "^file_out^"; fi; done") in (* On concatène les fichiers .temp dans file_out*)
   let _ = Sys.command "rm -f *.temp" in
-  let _ = Sys.command "rm -f *.debug" in
+  let _ = Sys.command "rm -f .debug" in
   ()
