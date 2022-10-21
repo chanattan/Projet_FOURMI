@@ -1,0 +1,5 @@
+fun main(){
+	turn(L);
+	wait(3);
+	turn(R)
+}

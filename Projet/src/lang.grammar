@@ -18,6 +18,7 @@ type command =
 	| Sense 		sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
 	| Flip			flip(<expression>, <ident>, [<expression*,>], <ident>, [<expression*,>])
 	| Drop			drop()
+	| Wait			wait(<expression>)
 
 
 type expression =
