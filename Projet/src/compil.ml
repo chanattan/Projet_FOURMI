@@ -274,7 +274,7 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 | Left -> fprintf file "\tTurn Left\n"
                 | Right -> fprintf file "\tTurn Right\n");
         Unit,env
-	| Sense((sensd,_), (condition,_) , (name_true,_), (arg_list_true,_), (name_false,_), (arg_list_false,_)) ->  (* Sense va, selon la condition et pour une direction sensd donnée, évaluer la fonction func_name_true sur arg_list_true ou func_name_false sur arg_list_false*)
+	(* | Sense((sensd,_), (condition,_) , (name_true,_), (arg_list_true,_), (name_false,_), (arg_list_false,_)) ->  (* Sense va, selon la condition et pour une direction sensd donnée, évaluer la fonction func_name_true sur arg_list_true ou func_name_false sur arg_list_false*)
                 let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
                 let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
                 let str_cond,new_env = process_condition condition env file in
@@ -296,7 +296,7 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
                 fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
                 fprintf file "%s: \n" current_label_true ;
-                Unit,new_env)
+                Unit,new_env) *)
   | Drop -> fprintf file "\tDrop\n" ; Unit,env
   | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
                 |Int(i,_) -> 
@@ -309,6 +309,7 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                     Unit,new_env
                 |_ -> Span.print sp stderr ; 
                 failwith "[Type Error] : wait argument wasn't an int")
+    | _ -> Unit,env
 
 (** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié
   On va rajouter des labels pour s'occuper des sauts avant et après *)
