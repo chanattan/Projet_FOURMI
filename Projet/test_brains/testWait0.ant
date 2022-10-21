@@ -1,0 +1,9 @@
+fun foo(){
+	wait(0)	
+};
+
+fun main(){
+	drop();
+	foo();
+	drop()
+}

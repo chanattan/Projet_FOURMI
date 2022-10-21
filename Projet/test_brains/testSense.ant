@@ -7,5 +7,7 @@ fun notHome(){
 };
 
 fun main(){
-	sense(AHEAD, IS_FRIEND, aheadIsHome, [], notHome, [])
+	drop();
+	sense(LEFTAHEAD, ISFRIEND, aheadIsHome, notHome, [;]);
+	drop()
 }

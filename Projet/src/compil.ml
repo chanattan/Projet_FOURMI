@@ -203,6 +203,17 @@ and process_compare (comp : compare) (env:environment) (file : out_channel) : bo
                 | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
                 | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
                 | Int(v1, _), Int(v2, _) -> (v1 = v2), new_env2)
+        | Neq(expr_left, expr_right) ->
+                let v1, new_env = eval (expr_left) env file in (*check type != unit*)
+                let v2, new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, Unit -> false, new_env2
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b1, _), Bool(b2, _) -> (b1 <> b2), new_env2
+                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, _), Int(v2, _) -> (v1 <> v2), new_env2)
         | Inf(expr_left, expr_right) ->
                 let v1, new_env = eval (expr_left) env file in
                 let v2, new_env2 = eval (expr_right) new_env file in
@@ -275,7 +286,7 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 | Left -> fprintf file "\tTurn Left\n"
                 | Right -> fprintf file "\tTurn Right\n");
         Unit,env
-	| Sense((sensd,_), (condition,_) , (name_true,_), (arg_list_true,_), (name_false,_), (arg_list_false,_)) ->  (* Sense va, selon la condition et pour une direction sensd donnée, évaluer la fonction func_name_true sur arg_list_true ou func_name_false sur arg_list_false*)
+	| Sense((sensd,_), (condition,_) , (name_true,_), (name_false,_),(arg_list_true,_), (arg_list_false,_)) ->  (* Sense va, selon la condition et pour une direction sensd donnée, évaluer la fonction func_name_true sur arg_list_true ou func_name_false sur arg_list_false*)
                 let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
                 let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
                 let str_cond,new_env = process_condition condition env file in
@@ -285,6 +296,7 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                 fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
                 fprintf file "%s: \n" current_label_true ;
                 Unit,new_env
+<<<<<<< HEAD
         | Flip((expr_i,sp), (name_true,_), (arg_list_true,_),(name_false,_),(arg_list_false,_)) ->
                         (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
                         let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
@@ -310,6 +322,33 @@ and process_command (cmd: command) (env: environment) (file: out_channel) : valu
                         Unit,new_env
                         |_ -> Span.print sp stderr ; 
                         failwith "[Type Error] : wait argument wasn't an int")
+=======
+  | Flip((expr_i,sp), (name_true,_),(name_false,_),(arg_list_true,_),(arg_list_false,_)) ->
+                (let current_label_true,goto_label_true,_,_ = process_apply_nowrite name_true arg_list_true env file in
+                let current_label_false,goto_label_false,_,_ = process_apply_nowrite name_false arg_list_false env file in
+                let value, new_env = eval (expr_i,sp) env file in 
+                let val_i = (match value with
+                        |Int(i,_) -> i
+                        |_ -> Span.print sp stderr ; failwith "[Type Error] : Flip argument wasn't an int") in
+                fprintf file "\tFlip %i %s %s\n" val_i goto_label_true goto_label_false;
+                fprintf file "\tGoto %s\n" current_label_true ; (* On veut rentrer au même endroit mais les fonctions elles ne reviennent pas au même endroit *)
+                fprintf file "%s: \n" current_label_false ; (* On choisit arbitrairement que le true sera la suite du programme général *)
+                fprintf file "\tGoto %s\n" current_label_true ; (* Depuis le retour du false, on saute directement au retour de true, la suite*)
+                fprintf file "%s: \n" current_label_true ;
+                Unit,new_env)
+  | Drop -> fprintf file "\tDrop\n" ; Unit,env
+  | Wait(expr,sp) -> let v,new_env = eval (expr,sp) env file in (match v with
+                |Int(i,_) -> 
+                  for _ = 0 to i - 1 do 
+                    let label = ("wait_"^(Int.to_string (!fun_counter))) in
+                    fprintf file "\tGoto %s\n" label ;
+                    fprintf file "%s:\n" label;
+                  incr fun_counter
+                  done;
+                    Unit,new_env
+                |_ -> Span.print sp stderr ; 
+                failwith "[Type Error] : wait argument wasn't an int")
+>>>>>>> 336fd729e58c5f94b5cc96f7c3a3d072d8d5a627
 
 (** On traite le cas Apply d'appel d'une fonction name avec les arguments args_expr sous forme d'expression dans l'environnement spécifié
   On va rajouter des labels pour s'occuper des sauts avant et après *)

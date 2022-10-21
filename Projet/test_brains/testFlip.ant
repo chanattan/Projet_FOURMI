@@ -7,6 +7,8 @@ fun sadge(){
 };
 
 fun main(){
-	flip(5, lucky, [], sadge, [])
+	drop();
+	flip(5, lucky, sadge, [;]);
+	drop()
 }
 

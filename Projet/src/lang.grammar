@@ -3,6 +3,7 @@ type program =
 
 type compare =
     | Eq            eq <expression> <expression>
+	| Neq			neq <expression> <expression>
 	| Inf           le <expression> <expression>
     | Sup           ge <expression> <expression>
 	| StInf			lt <expression> <expression>
@@ -15,8 +16,8 @@ type command =
 	| Unmark		unmark(<expression>)
 	| Pickup		pickup(<ident>, [<expression*,>])
 	| Turn			turn(<direction>)
-	| Sense 		sense(<sensedir>, <cond>, <ident>, [<expression*,>], <ident>, [<expression*,>])
-	| Flip			flip(<expression>, <ident>, [<expression*,>], <ident>, [<expression*,>])
+	| Sense 		sense(<sensedir>, <cond>, <ident>, <ident>, [<expression*,>;<expression*,>])
+	| Flip			flip(<expression>, <ident>, <ident>, [<expression*,> ; <expression*,>])
 	| Drop			drop()
 	| Wait			wait(<expression>)
 
@@ -44,24 +45,24 @@ type operation =
 	| Mod			mod <expression> <expression>
 
 type cond =
-	| Friend 			IS_FRIEND
-	| Foe				IS_FOE
-	| FriendWithFood	IS_FRIEND_WITH_FOOD
-	| FoeWithFood		IS_FOE_WITH_FOOD
-	| Food				IS_FOOD
-	| Rock				IS_ROCK
-	| Marker			IS_MARKER <expression>
-	| FoeMarker			IS_FOE_MARKER
-	| Home				IS_HOME
-	| FoeHome			IS_FOE_HOME
+	| Friend 			ISFRIEND
+	| Foe				ISFOE
+	| FriendWithFood	ISFRIENDWITHFOOD
+	| FoeWithFood		ISFOEWITHFOOD
+	| Food				ISFOOD
+	| Rock				ISROCK
+	| Marker			ISMARKER <expression>
+	| FoeMarker			ISFOEMARKER
+	| Home				ISHOME
+	| FoeHome			ISFOEHOME
 
 type direction = 
 	| Left 		L
 	| Right 	R
 
 type sensedir = 
-	| LeftAhead 		LEFT_AHEAD
-	| RightAhead 		RIGHT_AHEAD
+	| LeftAhead 		LEFTAHEAD
+	| RightAhead 		RIGHTAHEAD
 	| Here				HERE
 	| Ahead				AHEAD
 
