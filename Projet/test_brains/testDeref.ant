@@ -1,0 +1,26 @@
+fun main() {
+	let a = 5;
+	if (eq !a 1) {
+		drop()
+	}; else {
+		turn(L)
+	};
+	if (eq !a 5) {
+		drop()
+	}; else {
+		turn(R)
+	};
+
+	let b = true;
+	if (eq !b false) {
+		drop()
+	}; else {
+		turn(L)
+	};
+
+	if (eq !b true) {
+		turn(R)
+	}; else {
+		turn(L)
+	};
+}

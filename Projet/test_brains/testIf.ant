@@ -6,7 +6,16 @@ fun main(){
     if(false){
         turn(R)
     };
-    else{
+
+    if (false) {
+	turn(L)
+    }; else{
         drop()
+    };
+
+    if (true) {
+	turn(R)
+    }; else {
+	drop()
     }
 }
