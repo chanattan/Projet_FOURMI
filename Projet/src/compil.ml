@@ -202,6 +202,17 @@ and process_compare (comp : compare) (env:environment) (file : out_channel) : bo
                 | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
                 | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
                 | Int(v1, _), Int(v2, _) -> (v1 = v2), new_env2)
+        | Neq(expr_left, expr_right) ->
+                let v1, new_env = eval (expr_left) env file in (*check type != unit*)
+                let v2, new_env2 = eval (expr_right) new_env file in
+                (match v1, v2 with
+                | Unit, Unit -> false, new_env2
+                | Unit, _ -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | _, Unit -> failwith "[Type Error] : Trying to compare unit with something.\n"
+                | Bool(b1, _), Bool(b2, _) -> (b1 <> b2), new_env2
+                | Bool(_, sp), _ -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | _, Bool(_, sp) -> Span.print sp stderr; failwith "[Type Error] : Trying to compare bool with another type.\n"
+                | Int(v1, _), Int(v2, _) -> (v1 <> v2), new_env2)
         | Inf(expr_left, expr_right) ->
                 let v1, new_env = eval (expr_left) env file in
                 let v2, new_env2 = eval (expr_right) new_env file in

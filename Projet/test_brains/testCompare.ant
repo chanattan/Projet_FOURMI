@@ -4,5 +4,11 @@ fun main(){
 	};
 	if(le 5 6){
 		turn(L)
+	};
+	if(neq 5 5){
+		drop()
+	};
+	else{
+		turn(R)
 	}
 }
