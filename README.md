@@ -449,6 +449,7 @@ Cela veut donc dire que l'environnement d'une boucle while est local et se réin
 - Les span permettent de repérer les erreurs dans le compilateur pour aller dans le noeud concerné dans l'AST.
 - process_compare est la fonction spécifique du compilateur qui va évaluer des comparaisons entre valeurs et retourner un booléen de Caml qui sera évalué dans le compilateur pour être retraduit en <bool> du langage. C'est un choix arbitraire de développement aura permi de simplifier un peu de code.
 - Le If then Else a été géré pour que le Else soit optionnel, cela est engendré par la grammaire et donc force l'usage du ; entre les deux structures (if else), le fonctionnement est géré par le compilateur.
+- Les fonctions imbriquées ne sont pas autorisées et ne compilent pas.
 
 ---
                 
